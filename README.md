@@ -16,6 +16,18 @@
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-35A77B?style=flat-square"></a>
 </p>
 
+## 🎬 Launch films
+
+<p align="center">
+  <video src="assets/media/launch-film-1.mp4" width="480" controls></video>
+  <video src="assets/media/launch-film-2.mp4" width="480" controls></video>
+</p>
+
+**Launch film 1** tours the dashboard apps — buses, trains, PSI, weather, the
+profile QR, usage and radio. **Launch film 2** walks through the assistant
+connections: Hermes over the computer bridge, and the Muse Android companion
+pairing flow.
+
 ## Set up your own Passport
 
 Use your own profile, photo, Wi-Fi networks, favourite bus stops and service

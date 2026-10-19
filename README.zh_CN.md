@@ -16,6 +16,15 @@
   <a href="LICENSE"><img alt="MIT 许可" src="https://img.shields.io/badge/license-MIT-35A77B?style=flat-square"></a>
 </p>
 
+## 🎬 发布短片
+
+<p align="center">
+  <video src="assets/media/launch-film-1.mp4" width="480" controls></video>
+  <video src="assets/media/launch-film-2.mp4" width="480" controls></video>
+</p>
+
+**第一部** 逐一介绍随身看板应用——巴士、列车、PSI 指数、天气、名片二维码、用量和电台。**第二部** 演示助手连接：通过电脑桥接使用 Hermes，以及 Muse Android 伴侣的配对流程。
+
 ## 配置你自己的 Passport
 
 使用自己的资料、照片、Wi-Fi 网络、常用巴士站和服务账号。
