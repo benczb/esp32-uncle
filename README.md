@@ -19,8 +19,8 @@
 ## 🎬 Launch films
 
 <p align="center">
-  <video src="https://raw.githubusercontent.com/benczb/esp32-uncle/main/assets/media/launch-film-1.mp4" width="480" controls></video>
-  <video src="https://raw.githubusercontent.com/benczb/esp32-uncle/main/assets/media/launch-film-2.mp4" width="480" controls></video>
+  <video src="https://github.com/user-attachments/assets/10baafbc-d238-43fc-b282-f2b2d2ec04bc" width="480" controls></video>
+  <video src="https://github.com/user-attachments/assets/257cc789-d551-45c1-ab0a-f0e6ade3930a" width="480" controls></video>
 </p>
 
 ## Set up your own Passport
