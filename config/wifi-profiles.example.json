@@ -1,0 +1,7 @@
+{
+  "default_profile": "home",
+  "wifi_profiles": [
+    {"id": "home", "ssid": "YOUR_HOME_2_4_GHZ", "password": "replace-this-home-password"},
+    {"id": "outside", "ssid": "YOUR_ANDROID_HOTSPOT", "password": "replace-this-hotspot-password"}
+  ]
+}

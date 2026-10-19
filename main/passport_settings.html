@@ -1,0 +1,255 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>随身护照 · 设置</title>
+<style>body{font:16px system-ui,sans-serif;background:#071710;color:#9bf7bc;margin:0}main{max-width:540px;padding:28px 20px;margin:auto}h1{font-size:26px}h2{font-size:20px;margin-top:36px}label{display:block;margin:18px 0 5px}input,select,textarea,button{box-sizing:border-box;font:inherit;border:1px solid #548e68;border-radius:4px;padding:12px;background:#102a1b;color:#caffdb;width:100%}button{background:#9bf7bc;color:#071710;font-weight:700;margin-top:20px;cursor:pointer}canvas{display:block;border:1px solid #548e68;image-rendering:pixelated;margin:16px auto}p{line-height:1.6}small{color:#a6c9b0}#status,#usage_setup_status{white-space:pre-wrap}input:focus-visible,button:focus-visible{outline:3px solid white;outline-offset:3px}input::placeholder,textarea::placeholder{color:#a6c9b0;opacity:1}#relay_stop{background:transparent;color:#9bf7bc}button:disabled,#relay_stop:disabled{background:#284534;color:#a6c9b0;cursor:default}select:focus-visible,textarea:focus-visible{outline:3px solid white;outline-offset:3px}</style>
+<main><h1>随身护照</h1><p>编辑个人资料、更换头像和连接服务。图片在浏览器内裁剪，不会上传到云端。</p>
+<label>语言 / Language<select id="language"><option value="0">简体中文</option><option value="1">English</option></select></label>
+<label>设备设置码<input id="code" type="password" inputmode="numeric" autocomplete="off" placeholder="输入设备屏幕上的 6 位数字"></label>
+<h2>个人名片</h2><label>显示名称<input id="name" maxlength="16"></label><label>个性签名<input id="tagline" maxlength="32"></label><label>联系方式<input id="contact" maxlength="42"></label>
+<label>名片二维码链接<input id="qr_url" type="url" maxlength="256" placeholder="https://www.linkedin.com/in/your-profile"></label><small>支持 LinkedIn、WhatsApp wa.me 或微信分享链接。设备名片页按确定显示二维码。</small>
+<label>主题<select id="theme"><option value="0">荧光绿</option><option value="1">白色</option><option value="2">全彩</option></select></label>
+<label>选择头像<input id="photo" type="file" accept="image/*"></label><canvas id="preview" width="80" height="112"></canvas>
+<label>缩放<input type="range" id="zoom" min="1" max="3" step="0.05" value="1"></label><label>水平位置<input type="range" id="panX" min="0" max="1" step="0.01" value="0.5"></label><label>垂直位置<input type="range" id="panY" min="0" max="1" step="0.01" value="0.5"></label><button id="upload">保存新头像</button>
+<h2>网络与城市</h2><label>选择 Wi-Fi<select id="wifi_profile"><option value="custom">手动输入网络</option><option value="home">在家 Home</option><option value="outside">手机热点</option></select></label><small>已配置的私人网络可直接选择，不会显示密码。保存后重启设备，或在设备设置页选择并按确定连接。</small><label>2.4 GHz Wi-Fi 名称<input id="ssid" maxlength="32" autocomplete="off"></label><label>Wi-Fi 密码<input id="password" type="password" maxlength="63" autocomplete="off" placeholder="留空保留现有密码"></label><label>城市<select id="city"><option value="singapore">新加坡</option><option value="johor-bahru">新山</option><option value="kuala-lumpur">吉隆坡</option><option value="penang">槟城</option></select></label>
+<h2>新加坡烟霾 · NEA PSI</h2><p>首页显示最新发布的 24 小时 PSI。设备没有 GPS；可选择当前区域，或填写手机坐标以匹配最近的 NEA 报告区域中心。坐标只发往本地设备和电脑桥接，不发送给 NEA。</p>
+<label>当前位置区域<select id="psi_region"><option value="unset">请选择当前位置</option><option value="central">中区 Central</option><option value="north">北区 North</option><option value="south">南区 South</option><option value="east">东区 East</option><option value="west">西区 West</option><option value="auto">按坐标选择最近报告区域</option></select></label>
+<button id="locate" type="button">使用手机当前位置</button><small>浏览器定位需要安全页面（HTTPS 或 localhost）。如设备 HTTP 设置页无法定位，请手选区域或填写坐标。</small>
+<label>纬度<input id="latitude" type="number" min="-90" max="90" step="any" placeholder="例如 1.35"></label><label>经度<input id="longitude" type="number" min="-180" max="180" step="any" placeholder="例如 103.82"></label>
+<h2>LTA · 巴士到站</h2><p>最多保存十个站点，每行填写「站点代码 | 名称」。上下键翻页和换站，确定刷新。时间单位为分钟，Arr 表示即将到站。</p><label>收藏巴士站<textarea id="bus_stops" rows="5" placeholder="82009 | Eunos Int"></textarea></label>
+<label>LTA API 密钥<input id="lta_api_key" type="password" maxlength="128" autocomplete="off" placeholder="留空保留现有密钥"></label><small>使用自己的 LTA DataMall Account Key。保存后不会回显，仅发送到 LTA；不要填写桥接令牌。</small><p id="lta_key_status" role="status"></p><h2>电脑桥接服务</h2><p>在家使用电脑局域网地址。巴士、PSI 和天气通过设备 Wi-Fi 直接联网；助手、用量与广播仍需要电脑服务。</p><label>服务地址<input id="bridge" type="url" maxlength="159" placeholder="http://电脑IP:4188"></label><label>服务访问令牌<input id="token" type="password" maxlength="96" autocomplete="off" placeholder="留空保留现有令牌"></label>
+<button id="save">保存设置</button><p role="status" id="save_status"></p><small>更改 Wi-Fi 后，长按设备确定键返回，再重启设备连接新网络。更换头像立即生效。</small>
+<h2>AI 用量账号登录</h2><p>输入服务访问令牌后连接账号。ChatGPT 登录用于 Codex 用量；Claude 使用官方 Claude Code，在电脑完成登录。</p>
+<label>账号提供商<select id="usage_provider"><option value="codex">ChatGPT / Codex</option><option value="claude">Claude Code</option></select></label>
+<label>账号名称<input id="usage_name" maxlength="48" autocomplete="off"></label><button id="usage_add">添加用量账号</button>
+<label>已添加的账号<select id="usage_accounts"></select></label><button id="usage_refresh">读取账号</button><button id="usage_login">连接所选账号</button><button id="usage_cancel">取消本次登录</button>
+<p role="status" id="usage_setup_status"></p><a id="usage_auth_link" hidden target="_blank" rel="noopener noreferrer">打开官方登录页面</a>
+<h2>手机热点 · 手机服务转发</h2><label><input id="phone_relay" type="checkbox" style="width:auto">通过手机 Tailscale 转发</label><label>电脑 Tailscale 服务地址<input id="relay_url" type="url" placeholder="http://100.x.y.z:4188"></label><p>Android 手机开启热点与 Tailscale，设备连接热点。用手机打开设备设置页，输入服务访问令牌并保持此页面开启。令牌仅在本页使用，不会回显已保存令牌。部分浏览器可能限制本地网络访问；失败时会显示错误。</p><button id="relay_start" type="button">连接手机转发</button><button id="relay_stop" type="button" disabled>停止转发</button><p id="relay_status" role="status"></p><small>保持此页面在前台并让手机保持唤醒。连接后，用设备按键查看用量、选择电台和播放；Muse 使用独立蓝牙连接。</small><h2>发送给助手</h2><p>回复会同步显示在设备对应助手页面。</p><label>助手<select id="agent"><option value="hermes">Hermes</option><option value="muse" disabled>Muse (Bluetooth)</option></select></label><label>消息<textarea id="message" maxlength="2000" rows="4"></textarea></label><button id="send">发送消息</button><p role="status" id="status"></p></main>
+<script>
+let configLoaded=false,ltaKeyConfigured=false;
+const el=id=>document.getElementById(id), status=t=>{el('status').textContent=phoneTr(t);el('save_status').textContent=phoneTr(t);};
+
+const phoneTranslations={"随身护照 · 设置": "Pocket Passport settings", "随身护照": "Pocket Passport", "编辑个人资料、更换头像和连接服务。图片在浏览器内裁剪，不会上传到云端。": "Edit your profile, photo and services. Images are cropped locally in your browser.", "语言 / Language": "Language / 语言", "简体中文": "简体中文", "设备设置码": "Device setup code", "个人名片": "Profile card", "显示名称": "Display name", "个性签名": "Tagline", "联系方式": "Contact", "名片二维码链接": "Profile QR link", "支持 LinkedIn、WhatsApp wa.me 或微信分享链接。设备名片页按确定显示二维码。": "Use a LinkedIn, WhatsApp wa.me or WeChat share link. Press OK on the profile card to display the QR.", "主题": "Theme", "荧光绿": "Neon Green", "白色": "White", "全彩": "Full Colour", "选择头像": "Choose photo", "缩放": "Zoom", "水平位置": "Horizontal position", "垂直位置": "Vertical position", "保存新头像": "Save new photo", "网络与城市": "Network and city", "选择 Wi-Fi": "Wi-Fi profile", "手动输入网络": "Enter manually", "在家 Home": "Home", "手机热点": "Phone Hotspot", "已配置的私人网络可直接选择，不会显示密码。保存后重启设备，或在设备设置页选择并按确定连接。": "Choose a saved private network without revealing its password. Restart after saving, or select it on the device and press OK to connect.", "2.4 GHz Wi-Fi 名称": "2.4 GHz Wi-Fi name", "Wi-Fi 密码": "Wi-Fi password", "城市": "City", "新加坡": "Singapore", "新山": "Johor Bahru", "吉隆坡": "Kuala Lumpur", "槟城": "Penang", "新加坡烟霾 · NEA PSI": "Singapore haze · NEA PSI", "首页显示最新发布的 24 小时 PSI。设备没有 GPS；可选择当前区域，或填写手机坐标以匹配最近的 NEA 报告区域中心。坐标只发往本地设备和电脑桥接，不发送给 NEA。": "The homepage shows the latest 24-hour PSI. No GPS is built in. Choose your region or enter coordinates to select the nearest NEA reporting centre. Coordinates stay on the device and local bridge.", "当前位置区域": "Current region", "请选择当前位置": "Choose your current region", "中区 Central": "Central", "北区 North": "North", "南区 South": "South", "东区 East": "East", "西区 West": "West", "按坐标选择最近报告区域": "Nearest reporting region by coordinates", "使用手机当前位置": "Use phone location", "浏览器定位需要安全页面（HTTPS 或 localhost）。如设备 HTTP 设置页无法定位，请手选区域或填写坐标。": "Browser location requires HTTPS or localhost. If unavailable here, choose a region or enter coordinates.", "纬度": "Latitude", "经度": "Longitude", "LTA · 巴士到站": "Bus arrivals", "最多保存十个站点，每行填写「站点代码 | 名称」。上下键翻页和换站，确定刷新。时间单位为分钟，Arr 表示即将到站。": "Save up to ten stops, one per line: stop code | name. Up/Down changes pages and stops; OK refreshes. Times are in minutes; Arr means arriving.", "收藏巴士站": "Favourite bus stops", "电脑桥接服务": "Computer bridge", "在家使用电脑局域网地址。巴士、PSI 和天气通过设备 Wi-Fi 直接联网；助手、用量与广播仍需要电脑服务。": "At home, use your computer LAN address. Bus, PSI and weather use device Wi-Fi directly. Hermes, usage and radio need the computer bridge. Muse Passport integration is separate.", "服务地址": "Service URL", "服务访问令牌": "Service access token", "保存设置": "Save settings", "更改 Wi-Fi 后，长按设备确定键返回，再重启设备连接新网络。更换头像立即生效。": "After changing Wi-Fi, hold OK to exit and restart to connect. A new photo appears immediately.", "发送给助手": "Send to assistant", "回复会同步显示在设备对应助手页面。": "Replies appear on the matching assistant page.", "通过手机 Tailscale 转发助手": "Relay Hermes through phone Tailscale", "电脑 Tailscale 服务地址": "Computer Tailscale service URL", "Android 手机开启热点与 Tailscale，设备连接热点。用手机打开设备设置页，输入服务访问令牌并保持此页面开启。令牌仅在本页使用，不会回显已保存令牌。部分浏览器可能限制本地网络访问；失败时会显示错误。": "Enable your Android hotspot and Tailscale. Open the device settings on your phone, enter the service token and keep this page open. Saved tokens are never shown. Browser local-network rules may block requests; errors appear here. Phone Tailscale does not automatically route hotspot clients.", "助手": "Assistant", "消息": "Message", "发送消息": "Send message", "输入设备屏幕上的 6 位数字": "Enter the 6 digits shown on the device", "留空保留现有密码": "Leave blank to retain saved password", "留空保留现有令牌": "Leave blank to retain saved token", "例如 1.35": "For example 1.35", "例如 103.82": "For example 103.82", "http://电脑IP:4188": "http://computer-ip:4188", "已读取资料并同步设备时间；已保存的密码和令牌不会回显。": "Profile loaded and clock synchronised. Saved passwords and tokens are hidden.", "请先输入设置码并读取资料，再保存": "Enter the setup code and load your profile before saving", "站点代码必须是 3 至 5 位数字": "Stop codes must contain 3 to 5 digits", "站点名称最多 24 个字符": "Stop names may contain up to 24 characters", "最多保存十个巴士站": "Save up to ten bus stops", "请移除重复站点": "Remove duplicate stops", "请填写完整坐标，或手选区域": "Enter both coordinates or choose a region", "设置已保存。": "Settings saved.", "当前浏览器页面不支持安全定位。请手选区域或填写坐标。": "Secure location is unavailable here. Choose a region or enter coordinates.", "已取得手机位置。点击保存设置应用。": "Phone location received. Save settings to apply.", "未取得定位权限或位置。可手选区域。": "Location unavailable or permission denied. Choose a region.", "请选择小于 15 MB 的图片": "Choose an image smaller than 15 MB", "调整裁剪后，点击保存新头像。": "Adjust the crop, then Save new photo.", "请先选择头像。": "Choose a photo first.", "新头像已保存到设备，重启后仍然保留。": "Photo saved to the device and retained after restart.", "服务地址无效": "Invalid service URL", "手机转发需要重新输入服务访问令牌": "Re-enter the service access token for phone relay", "服务请求失败": "Service request failed", "正在通过手机连接助手...": "Connecting through phone...", "助手返回状态无效": "Invalid assistant state", "暂无回复": "No reply yet", "助手等待超时，请稍后重试": "Assistant timed out; retry later", "请输入消息": "Enter a message", "手机正在转发，请保持页面开启。": "Phone relay active. Keep this page open.", "回复已显示在设备上。": "Reply is displayed on the device.", "已发送。请在设备助手页面查看回复。": "Sent. View the reply on the device.", "手机转发失败，请查看手机设置页。": "Phone relay failed. Check the phone settings page."};
+Object.assign(phoneTranslations,{
+ "手机热点 · 手机服务转发":"Phone Hotspot: phone relay", "通过手机 Tailscale 转发":"Relay through phone Tailscale",
+ "连接手机转发":"Connect phone relay", "停止转发":"Stop relay",
+ "保持此页面在前台并让手机保持唤醒。连接后，用设备按键查看用量、选择电台和播放；Muse 使用独立蓝牙连接。":"Keep this page in the foreground and your phone awake. Use the Passport buttons for usage and radio. Muse uses a separate Bluetooth connection.",
+ "请先输入设备设置码。":"Enter the six-digit device setup code first.", "正在连接手机转发…":"Connecting phone relay…", "手机转发已连接，可在设备上查看用量和播放电台。":"Phone relay connected. Use usage and radio on the Passport.",
+ "手机转发已停止。":"Phone relay stopped.", "手机转发已断开，请重新连接。":"Phone relay disconnected. Connect again.",
+ "电台连接失败，请在设备上重试。":"Radio connection failed. Retry on the Passport.", "用量刷新失败，请重新连接手机转发。":"Usage refresh failed. Reconnect phone relay."
+});
+Object.assign(phoneTranslations,{
+ "AI 用量账号登录":"AI usage account sign-in", "输入服务访问令牌后连接账号。ChatGPT 登录用于 Codex 用量；Claude 使用官方 Claude Code，在电脑完成登录。":"Enter the bridge access token to connect accounts. ChatGPT sign-in connects Codex usage; complete Claude sign-in through official Claude Code on the computer.",
+ "账号提供商":"Account provider", "账号名称":"Account name", "添加用量账号":"Add usage account", "已添加的账号":"Added accounts", "读取账号":"Load accounts", "连接所选账号":"Connect selected account", "取消本次登录":"Cancel this sign-in", "打开官方登录页面":"Open official sign-in page",
+ "请选择账号":"Choose an account", "尚未登录":"Not signed in", "正在打开官方登录":"Starting official sign-in", "等待账号授权":"Waiting for account authorization", "账号已连接":"Account connected", "登录已取消":"Sign-in cancelled", "登录失败，请重试":"Sign-in failed; retry", "登录码":"Sign-in code", "请在电脑完成 Claude Code 登录":"Complete Claude Code sign-in on the computer", "登录状态已过期，请重试":"Sign-in status expired; retry"
+});
+Object.assign(phoneTranslations,{"LTA 密钥格式无效":"Invalid LTA key format","LTA API 密钥":"LTA API key","留空保留现有密钥":"Leave blank to retain saved key","使用自己的 LTA DataMall Account Key。保存后不会回显，仅发送到 LTA；不要填写桥接令牌。":"Use your own LTA DataMall Account Key. It is never shown after saving and is sent only to LTA. This is not the bridge token.","LTA 密钥已配置":"LTA key configured","尚未配置 LTA 密钥":"LTA key not configured"});
+const phoneTextNodes=[],phonePlaceholders=[];
+if(document.createTreeWalker){
+ const walker=document.createTreeWalker(document.documentElement,4);let n;
+ while((n=walker.nextNode()))if(n.parentElement && !['SCRIPT','STYLE'].includes(n.parentElement.tagName) && phoneTranslations[n.nodeValue.trim()])phoneTextNodes.push([n,n.nodeValue]);
+ for(const node of document.querySelectorAll('[placeholder]'))phonePlaceholders.push([node,node.getAttribute('placeholder')]);
+}
+function phoneTr(text){return el('language').value==='1'?(phoneTranslations[text]||text):text;}
+function applyPhoneLanguage(){
+ el('lta_key_status').textContent=phoneTr(ltaKeyConfigured?'LTA 密钥已配置':'尚未配置 LTA 密钥');
+ if(document.documentElement)document.documentElement.lang=el('language').value==='1'?'en':'zh-CN';
+ for(const [node,original] of phoneTextNodes)node.nodeValue=phoneTr(original.trim());
+ for(const [node,original] of phonePlaceholders)node.setAttribute('placeholder',phoneTr(original));
+}
+el('language').onchange=applyPhoneLanguage;
+
+async function call(path,body,type='application/json',signal){const r=await fetch(path,{method:body===undefined?'GET':'POST',headers:{'X-Passport-Code':el('code').value,'Content-Type':type},signal,body:body===undefined?undefined:type==='application/json'?JSON.stringify(body):body});const t=await r.text();if(!r.ok)throw Error(t);return t?JSON.parse(t):{};}
+el('code').onchange=async()=>{configLoaded=false;try{await call('/time',{unix_time:Math.floor(Date.now()/1000)});const c=await call('/config');for(const k of ['name','tagline','contact','qr_url','language','theme','ssid','city','bridge','psi_region','latitude','longitude'])el(k).value=c[k]??'';if(!el('relay_url').value)el('relay_url').value=c.bridge||'';el('bus_stops').value=(c.bus_stops||[]).map(s=>s.code+' | '+s.name).join('\n');el('wifi_profile').disabled=!(c.wifi_profiles||[]).length;el('wifi_profile').value=c.selected_wifi_profile||'custom';el('wifi_profile').onchange();ltaKeyConfigured=!!c.lta_key_configured;configLoaded=true;applyPhoneLanguage();status('已读取资料并同步设备时间；已保存的密码和令牌不会回显。');}catch(e){status(e.message)}};
+el('wifi_profile').onchange=()=>{const preset=!el('wifi_profile').disabled&&el('wifi_profile').value!=='custom';el('ssid').disabled=preset;el('password').disabled=false;};
+el('save').onclick=async()=>{try{if(!configLoaded)throw Error('请先输入设置码并读取资料，再保存');const c={};for(const k of ['name','tagline','contact','ssid','password','bridge','token','city','psi_region','lta_api_key'])c[k]=el(k).value;if(!el('wifi_profile').disabled&&el('wifi_profile').value!=='custom')c.wifi_profile=el('wifi_profile').value;c.bus_stops=el('bus_stops').value.split('\n').map(s=>s.trim()).filter(Boolean).map(line=>{const parts=line.split('|');const code=parts.shift().trim(),name=parts.join('|').trim();if(!/^[0-9]{3,5}$/.test(code))throw Error('站点代码必须是 3 至 5 位数字');if([...name].length>24)throw Error('站点名称最多 24 个字符');return {code,name};});if(c.bus_stops.length>10)throw Error('最多保存十个巴士站');if(new Set(c.bus_stops.map(s=>s.code)).size!==c.bus_stops.length)throw Error('请移除重复站点');c.language=+el('language').value||0;c.qr_url=el('qr_url').value.trim();c.theme=+el('theme').value;if(el('psi_region').value==='auto'){if(el('latitude').value===''||el('longitude').value==='')throw Error('请填写完整坐标，或手选区域');c.latitude=+el('latitude').value;c.longitude=+el('longitude').value;}if(c.lta_api_key && !/^[\x21-\x7e]{1,128}$/.test(c.lta_api_key))throw Error('LTA 密钥格式无效');await call('/config',c);if(c.lta_api_key)ltaKeyConfigured=true;applyPhoneLanguage();el('password').value='';el('token').value='';el('lta_api_key').value='';status('设置已保存。');}catch(e){status(e.message)}};
+el('locate').onclick=()=>{if(!globalThis.isSecureContext||!navigator.geolocation)return status('当前浏览器页面不支持安全定位。请手选区域或填写坐标。');navigator.geolocation.getCurrentPosition(p=>{el('latitude').value=p.coords.latitude.toFixed(6);el('longitude').value=p.coords.longitude.toFixed(6);el('psi_region').value='auto';status('已取得手机位置。点击保存设置应用。');},()=>status('未取得定位权限或位置。可手选区域。'),{enableHighAccuracy:false,timeout:10000,maximumAge:60000});};
+let image=null;function crop(){if(!image)return;const c=el('preview'),ctx=c.getContext('2d'),scale=Math.max(80/image.width,112/image.height)*+el('zoom').value,w=80/scale,h=112/scale;ctx.drawImage(image,(image.width-w)*+el('panX').value,(image.height-h)*+el('panY').value,w,h,0,0,80,112)}
+el('photo').onchange=async()=>{try{const file=el('photo').files[0];if(!file)return;if(file.size>15*1024*1024)throw Error('请选择小于 15 MB 的图片');image=await createImageBitmap(file);crop();status('调整裁剪后，点击保存新头像。')}catch(e){status(e.message)}};for(const id of ['zoom','panX','panY'])el(id).oninput=crop;
+el('upload').onclick=async()=>{if(!image)return status('请先选择头像。');try{const d=el('preview').getContext('2d').getImageData(0,0,80,112).data,out=new Uint8Array(80*112*2);for(let i=0,j=0;i<d.length;i+=4,j+=2){let r=d[i],g=d[i+1],b=d[i+2];let v=((r>>3)<<11)|((g>>2)<<5)|(b>>3);out[j]=v&255;out[j+1]=v>>8}await call('/avatar',out,'application/octet-stream');status('新头像已保存到设备，重启后仍然保留。')}catch(e){status(e.message)}};
+let phoneSession=null;
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+function serviceStatus(text){el('relay_status').textContent=phoneTr(text);}
+function phoneRemote(){
+ let url;try{url=new URL(el('relay_url').value);}catch(_){throw Error('服务地址无效');}
+ const key=el('token').value;
+ if(!/^\d{6}$/.test(el('code').value))throw Error('请先输入设备设置码。');
+ if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('服务地址无效');
+ if(!key)throw Error('手机转发需要重新输入服务访问令牌');
+ return {base:url.origin,headers:{Authorization:'Bearer '+key}};
+}
+async function phoneJson(remote,path){
+ const response=await fetch(remote.base+path,{headers:remote.headers,signal:AbortSignal.timeout(15000)});
+ if(!response.ok)throw Error('服务请求失败');return response.json();
+}
+async function relayControl(body){return call('/relay',body,'application/json',AbortSignal.timeout(2500));}
+async function forwardPhoneVoice(session){
+ if(session.closed)return false;
+ const request=await relayControl({action:'voice_poll'});
+ if(session.closed)return false;
+ if(!request.id)return false;
+ if(!Number.isSafeInteger(request.id)||!/^\/v1\/voice\/(start|finish|cancel|chunk\?session=[a-f0-9]{32}&seq=\d+)$/.test(request.path))throw Error('Invalid voice request');
+ if(session.voiceId!==request.id){
+  session.voiceId=request.id;session.voiceReply={action:'voice_ack',id:request.id,status:502,body:'{}'};
+  try{
+   const decoded=atob(request.body);if(decoded.length>4096)throw Error('Voice chunk too large');
+   const bytes=Uint8Array.from(decoded,c=>c.charCodeAt(0));
+   const response=await fetch(session.remote.base+request.path,{method:'POST',headers:{...session.remote.headers,'Content-Type':request.type},body:bytes,signal:AbortSignal.timeout(4500)});
+   const text=await response.text();if(new TextEncoder().encode(text).length>=256)throw Error('Voice reply too large');
+   session.voiceReply={action:'voice_ack',id:request.id,status:response.status,body:text};
+  }catch(_){}
+ }
+ if(!session.closed)await relayControl(session.voiceReply);
+ return true;
+}
+async function sendRadioFrame(session,generation,pcm,signal){
+ const packet=new Uint8Array(pcm.length+4);new DataView(packet.buffer).setUint32(0,generation,true);packet.set(pcm,4);
+ for(let retry=0;retry<40;retry++){
+  if(session.closed||signal.aborted)throw Error('Radio cancelled');
+  const response=await fetch('/relay',{method:'POST',headers:{'X-Passport-Code':el('code').value,'Content-Type':'application/octet-stream'},body:packet,signal:AbortSignal.any([signal,AbortSignal.timeout(2000)])});
+  if(response.ok)return;
+  if(response.status!==503){const error=Error('Radio transfer rejected');if(response.status===409)error.code='stale';throw error;}
+  await pause(25);
+ }
+ throw Error('Radio transfer busy');
+}
+async function pumpPhoneRadio(session,control,controller){
+ let reader,firstTimer;
+ try{
+  firstTimer=setTimeout(()=>controller.abort(),15000);
+  const response=await fetch(session.remote.base+(control.speech_id?'/v1/speech/hermes?id='+encodeURIComponent(control.speech_id):'/v1/radio?station='+control.station),{headers:session.remote.headers,signal:controller.signal});
+  clearTimeout(firstTimer);if(!response.ok||!response.body)throw Error('Station unavailable');
+  reader=response.body.getReader();let carry=new Uint8Array(0);
+  while(!session.closed&&!controller.signal.aborted){
+   let timer;
+   const chunk=await Promise.race([reader.read(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Radio stalled')),5000)})]).finally(()=>clearTimeout(timer));
+   if(chunk.done){
+    if(!control.speech_id)throw Error('Radio ended');
+    for(let retry=0;retry<100&&!controller.signal.aborted;retry++){
+     try{await relayControl({action:'speech_end',generation:control.generation});return;}catch(_){await pause(50);}
+    }
+    throw Error('Speaker did not drain');
+   }
+   const bytes=new Uint8Array(carry.length+chunk.value.length);bytes.set(carry);bytes.set(chunk.value,carry.length);
+   let offset=0;
+   while(offset+1<bytes.length){const end=offset+Math.min(1024,(bytes.length-offset)&~1);await sendRadioFrame(session,control.generation,bytes.subarray(offset,end),controller.signal);offset=end;}
+   carry=bytes.slice(offset);
+  }
+ }catch(error){
+  if(!session.closed&&!controller.signal.aborted&&error.code!=='stale'){serviceStatus('电台连接失败，请在设备上重试。');try{await relayControl({action:'radio_error',generation:control.generation});}catch(_){} }
+ }finally{
+  clearTimeout(firstTimer);controller.abort();if(reader)try{await reader.cancel();}catch(_){}
+ }
+}
+async function phoneServiceLoop(session){
+ try{
+  while(!session.closed){
+   const control=await relayControl({action:'poll'});
+   if(session.closed)break;
+   if(await forwardPhoneVoice(session)){await pause(10);continue;}
+   if(control.page===4){
+    if(control.voice_phase===4&&!session.replyRefreshing&&Date.now()-(session.replyAt||0)>2000){
+     session.replyRefreshing=true;
+     void phoneJson(session.remote,'/v1/reply/hermes').then(async data=>{
+      if(session.closed||!['done','error'].includes(data.state))return;
+      let text=String(data.text||'');const bytes=new TextEncoder().encode(text);
+      if(bytes.length>6000)text=new TextDecoder().decode(bytes.slice(0,6000)).replace(/\uFFFD$/,'')+'…';
+      await relayControl({agent:'hermes',text,state:data.state,speech_id:data.speech_id||''});
+     }).catch(()=>{}).finally(()=>{session.replyAt=Date.now();session.replyRefreshing=false;});
+    }
+   }
+   if(!control.playing){if(session.radio)session.radio.abort();session.radio=null;session.generation=-1;}
+   else if(control.generation!==session.generation){
+    if(session.radio)session.radio.abort();session.generation=control.generation;session.radio=new AbortController();
+    void pumpPhoneRadio(session,control,session.radio);
+   }
+   if(control.page===3&&Date.now()-session.usageAt>30000&&!session.refreshing){
+    session.refreshing=true;
+    void phoneJson(session.remote,'/v1/usage').then(data=>session.closed?null:relayControl({action:'usage',data})).catch(()=>{if(!session.closed)serviceStatus('用量刷新失败，请重新连接手机转发。');}).finally(()=>{session.usageAt=Date.now();session.refreshing=false;});
+   }
+   const weatherKey=String(control.weather_generation)+':'+control.city;
+   if(!session.weatherRefreshing&&(weatherKey!==session.weatherKey||Date.now()-session.weatherAt>120000)){
+    session.weatherRefreshing=true;
+    const generation=control.weather_generation,city=control.city;
+    void phoneJson(session.remote,'/v1/weather?city='+encodeURIComponent(city)).then(data=>session.closed?null:relayControl({action:'weather',generation,city,data})).catch(()=>{}).finally(()=>{session.weatherAt=Date.now();session.weatherKey=weatherKey;session.weatherRefreshing=false;});
+   }
+   await pause(control.page===4&&control.voice_phase>=1&&control.voice_phase<=3?10:350);
+  }
+ }catch(error){if(!session.closed){serviceStatus('手机转发已断开，请重新连接。');await stopPhoneServices(false);}}
+}
+async function startPhoneServices(){
+ if(phoneSession)return;
+ el('relay_start').disabled=true;serviceStatus('正在连接手机转发…');
+ try{
+  const remote=phoneRemote(),stations=await phoneJson(remote,'/v1/stations');
+  await relayControl({action:'start',stations:stations.stations});
+  const session={remote,closed:false,radio:null,generation:-1,usageAt:0,refreshing:false,weatherAt:0,weatherKey:'',weatherRefreshing:false};phoneSession=session;
+  el('phone_relay').checked=true;el('relay_stop').disabled=false;serviceStatus('手机转发已连接，可在设备上查看用量和播放电台。');
+  void phoneServiceLoop(session);
+ }catch(error){el('relay_start').disabled=false;serviceStatus(error.name==='TypeError'?'服务请求失败':error.message);try{await relayControl({action:'stop'});}catch(_){} }
+}
+async function stopPhoneServices(show=true){
+ const session=phoneSession;phoneSession=null;
+ if(session){session.closed=true;if(session.radio)session.radio.abort();}
+ el('relay_start').disabled=false;el('relay_stop').disabled=true;
+ try{await relayControl({action:'stop'});}catch(_){}
+ if(show)serviceStatus('手机转发已停止。');
+}
+el('relay_start').onclick=startPhoneServices;el('relay_stop').onclick=()=>stopPhoneServices();
+if(typeof window!=='undefined'&&window.addEventListener)window.addEventListener('pagehide',()=>{if(phoneSession){phoneSession.closed=true;if(phoneSession.radio)phoneSession.radio.abort();}});
+
+let sending=false;
+async function phoneAgent(agent,text){
+ const url=new URL(el('relay_url').value);if(url.protocol!=='http:'&&url.protocol!=='https:')throw Error('服务地址无效');
+ const key=el('token').value;if(!key)throw Error('手机转发需要重新输入服务访问令牌');
+ const headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'};
+ async function remote(path,body){const r=await fetch(url.origin+path,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000)});const j=await r.json();if(!r.ok)throw Error(j.error||'服务请求失败');return j;}
+ await call('/relay',{agent,text:'正在通过手机连接助手...'});
+ await remote('/v1/chat/'+agent,{text});
+ const deadline=Date.now()+195000;
+ while(Date.now()<deadline){await new Promise(r=>setTimeout(r,2000));await call('/relay',{agent,text:'正在通过手机连接助手...'});const j=await remote('/v1/reply/'+agent);
+  if(j.state==='working')continue;
+  if(j.state!=='done'&&j.state!=='error')throw Error('助手返回状态无效');
+  let result=String(j.text||'暂无回复');let bytes=new TextEncoder().encode(result);if(bytes.length>6000){result=new TextDecoder().decode(bytes.slice(0,6000));result=result.replace(/\uFFFD$/,'')+'…';}
+  await call('/relay',{agent,text:result,state:j.state,speech_id:j.speech_id||''});return;
+ }
+ throw Error('助手等待超时，请稍后重试');
+}
+el('send').onclick=async()=>{if(sending)return;const agent=el('agent').value;try{const text=el('message').value;if(!text.trim())throw Error('请输入消息');sending=true;el('send').disabled=true;if(el('phone_relay').checked){status('手机正在转发，请保持页面开启。');await phoneAgent(agent,text);status('回复已显示在设备上。');}else{await call('/chat',{agent,text});status('已发送。请在设备助手页面查看回复。');}}catch(e){status(e.message);if(el('phone_relay').checked){try{await call('/relay',{agent,text:'手机转发失败，请查看手机设置页。'});}catch(_){}}}finally{sending=false;el('send').disabled=false;}};
+
+
+let usageSetupPoll=null,usageSetupGeneration=0;
+async function usageSetupRequest(path,body){
+ const entered=el('relay_url').value||el('bridge').value;let url;
+ try{url=new URL(entered);}catch(_){throw Error(phoneTr('服务地址无效'));}
+ if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error(phoneTr('服务地址无效'));
+ const key=el('token').value;if(!key)throw Error(phoneTr('手机转发需要重新输入服务访问令牌'));
+ const response=await fetch(url.origin+path,{method:body===undefined?'GET':'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
+ const data=await response.json();if(!response.ok)throw Error(data.error||phoneTr('服务请求失败'));return data;
+}
+function showUsageSetup(state){
+ const names={idle:'尚未登录',starting:'正在打开官方登录',waiting:'等待账号授权',done:'账号已连接',cancelled:'登录已取消',error:'登录失败，请重试'};
+ let text=phoneTr(names[state.state]||'尚未登录');
+ if(state.userCode)text+='\n'+phoneTr('登录码')+': '+state.userCode;
+ if(el('usage_provider').value==='claude'&&state.state==='waiting')text+='\n'+phoneTr('请在电脑完成 Claude Code 登录');
+ el('usage_setup_status').textContent=text;
+ const link=el('usage_auth_link');link.hidden=true;link.removeAttribute('href');
+ if(state.authUrl&&['starting','waiting'].includes(state.state)){const url=new URL(state.authUrl);if(url.protocol==='https:'&&['auth.openai.com','chatgpt.com','claude.ai','console.anthropic.com','platform.claude.com'].includes(url.hostname)&&!url.username&&!url.password){link.href=url.href;link.hidden=false;}}
+}
+async function loadUsageAccounts(selected){
+ const data=await usageSetupRequest('/v1/accounts');const list=el('usage_accounts');const previous=selected||list.value;list.replaceChildren();
+ for(const account of data.accounts){const option=document.createElement('option');option.value=account.id;option.textContent=account.name+' · '+(account.provider==='codex'?'ChatGPT / Codex':'Claude Code');option.dataset.provider=account.provider;list.appendChild(option);}
+ if(data.accounts.some(a=>a.id===previous))list.value=previous;
+ const account=data.accounts.find(a=>a.id===list.value);if(account){el('usage_provider').value=account.provider;showUsageSetup(account);}
+ return data;
+}
+async function pollUsageSetup(id,generation,deadline){
+ if(generation!==usageSetupGeneration)return;
+ try{const state=await usageSetupRequest('/v1/accounts/'+encodeURIComponent(id)+'/status');if(generation!==usageSetupGeneration)return;showUsageSetup(state);
+  if(['starting','waiting'].includes(state.state)&&Date.now()<deadline)usageSetupPoll=setTimeout(()=>pollUsageSetup(id,generation,deadline),1500);
+ }catch(e){if(generation===usageSetupGeneration)el('usage_setup_status').textContent=e.message;}
+}
+el('usage_refresh').onclick=async()=>{try{await loadUsageAccounts();}catch(e){el('usage_setup_status').textContent=e.message;}};
+el('usage_add').onclick=async()=>{el('usage_add').disabled=true;try{const data=await usageSetupRequest('/v1/accounts',{provider:el('usage_provider').value,name:el('usage_name').value});await loadUsageAccounts(data.id);}catch(e){el('usage_setup_status').textContent=e.message;}finally{el('usage_add').disabled=false;}};
+el('usage_login').onclick=async()=>{const id=el('usage_accounts').value;if(!id)return void(el('usage_setup_status').textContent=phoneTr('请选择账号'));const generation=++usageSetupGeneration;clearTimeout(usageSetupPoll);el('usage_login').disabled=true;try{showUsageSetup(await usageSetupRequest('/v1/accounts/'+encodeURIComponent(id)+'/login',{}));await pollUsageSetup(id,generation,Date.now()+610000);}catch(e){el('usage_setup_status').textContent=e.message;}finally{el('usage_login').disabled=false;}};
+el('usage_cancel').onclick=async()=>{const id=el('usage_accounts').value;if(!id)return;++usageSetupGeneration;clearTimeout(usageSetupPoll);try{showUsageSetup(await usageSetupRequest('/v1/accounts/'+encodeURIComponent(id)+'/cancel',{}));}catch(e){el('usage_setup_status').textContent=e.message;}};
+el('usage_accounts').onchange=()=>{const option=el('usage_accounts').selectedOptions[0];if(option)el('usage_provider').value=option.dataset.provider;};
+
+</script></html>

@@ -1,0 +1,10 @@
+menu "Passport board support"
+    config BSP_LVGL_DRAW_BUFFER_LINES
+        int "LVGL single drawing buffer rows"
+        range 1 320
+        default 40
+        help
+            RGB565 buffer size is screen width times rows times two bytes.
+            Smaller strips leave more internal DMA RAM for radio and Bluetooth,
+            at the cost of additional display flush transactions.
+endmenu

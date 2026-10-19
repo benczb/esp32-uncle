@@ -1,0 +1,6 @@
+passport_font_16.c is generated from:
+Droid Sans Fallback, Copyright 2006-2010 Google Corp., Apache License 2.0.
+Source: https://android.googlesource.com/platform/frameworks/base/
+DejaVu Sans Mono, Bitstream Vera and DejaVu authors, permissive font license.
+See DejaVu-copyright.txt and Apache-2.0.txt.
+This generated subset is a modification for Pocket Passport (16px, 2bpp).

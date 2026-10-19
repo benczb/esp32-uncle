@@ -1,0 +1,2 @@
+# Optional local microphone transcription; typed chat needs no extra packages.
+faster-whisper==1.2.1
