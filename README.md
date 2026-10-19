@@ -23,6 +23,25 @@
   <video src="https://github.com/user-attachments/assets/257cc789-d551-45c1-ab0a-f0e6ade3930a" width="480" controls></video>
 </p>
 
+## ✨ One little device, nine apps
+
+| App | What it brings |
+| --- | --- |
+| 🚌 Bus arrivals | Your chosen favourite stops and three arrival estimates, using your own LTA API key |
+| 🚆 Train alerts | LTA service alerts and disruption-trip details, with a one-line homepage notice |
+| 📊 AI Usage | Your connected Codex / Claude accounts' remaining quota and reset countdowns, through your own usage tracker |
+| 💬 Hermes | Phone text input, replies paged on the Passport |
+| 🪄 Muse | Official Muse AI through Muse Passport · integration in progress |
+| 🪪 Profile card | Name, photo and LinkedIn / WhatsApp / WeChat link QR; press OK to switch views |
+| 📻 Radio | Six Singapore and four Malaysian station presets |
+| 🌦️ Weather | Singapore, Johor Bahru, Kuala Lumpur and Penang |
+| ⚙️ Settings | Chinese / English, profile QR, photo, Wi-Fi, city, PSI region and bus favourites |
+
+The homepage header shows the local day and 24-hour time, such as **MON 12:55**.
+It updates each minute; **--- --:--** means the clock has not synchronised.
+The portrait homepage also shows **NEA 24-hour PSI**.
+The device has no GPS: select a region or update saved coordinates after moving.
+
 ## Set up your own Passport
 
 Use your own profile, photo, Wi-Fi networks, favourite bus stops and service
@@ -83,25 +102,6 @@ the workflow completes. Those clean builds contain no personal Wi-Fi presets.
 
 The target is **ESP32-C3, 8 MB flash, no PSRAM**, with the original FoloToy BSP.
 Firmware archives are generated locally and are not committed.
-
-## ✨ One little device, nine apps
-
-| App | What it brings |
-| --- | --- |
-| 🚌 Bus arrivals | Your chosen favourite stops and three arrival estimates, using your own LTA API key |
-| 🚆 Train alerts | LTA service alerts and disruption-trip details, with a one-line homepage notice |
-| 📊 AI Usage | Your connected Codex / Claude accounts' remaining quota and reset countdowns, through your own usage tracker |
-| 💬 Hermes | Phone text input, replies paged on the Passport |
-| 🪄 Muse | Official Muse AI through Muse Passport · integration in progress |
-| 🪪 Profile card | Name, photo and LinkedIn / WhatsApp / WeChat link QR; press OK to switch views |
-| 📻 Radio | Six Singapore and four Malaysian station presets |
-| 🌦️ Weather | Singapore, Johor Bahru, Kuala Lumpur and Penang |
-| ⚙️ Settings | Chinese / English, profile QR, photo, Wi-Fi, city, PSI region and bus favourites |
-
-The homepage header shows the local day and 24-hour time, such as **MON 12:55**.
-It updates each minute; **--- --:--** means the clock has not synchronised.
-The portrait homepage also shows **NEA 24-hour PSI**.
-The device has no GPS: select a region or update saved coordinates after moving.
 
 ## 🔊 Assistant replies and volume
 
