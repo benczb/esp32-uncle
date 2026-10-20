@@ -101,6 +101,20 @@ int main(int argc,char **argv) {
  }
  snprintf(path,sizeof(path),"%s-%u-%u-%d.ppm",prefix,language,theme,page);save(path);
  }
+ /* NFC instructions must fit above the footer in both languages/themes. */
+ for(unsigned nfc_theme=0;nfc_theme<3;nfc_theme++){
+  passport_config.theme=nfc_theme;model.page=PAGE_CARD;model.reply_page=2;
+  passport_ui_render(&model,86);lv_refr_now(d);
+  int previous_bottom=50;unsigned labels=0;lv_obj_t *nfc_root=lv_screen_active();
+  for(unsigned i=0;i<lv_obj_get_child_count(nfc_root);i++){
+   lv_obj_t *child=lv_obj_get_child(nfc_root,i);
+   if(!lv_obj_check_type(child,&lv_label_class) || lv_obj_get_y(child)<50)continue;
+   int y=lv_obj_get_y(child),bottom=y+lv_obj_get_height(child);
+   assert(y>=previous_bottom && bottom<=310);previous_bottom=bottom;labels++;
+  }
+  assert(labels==6);
+  snprintf(path,sizeof(path),"%s-nfc-%u-%u.ppm",prefix,language,nfc_theme);save(path);
+ }
  model.page=PAGE_CARD;model.reply_page=1;
  passport_ui_render(&model,86);lv_refr_now(d);snprintf(path,sizeof(path),"%s-qr-%u.ppm",prefix,language);save(path);
  model.reply_page=0;

@@ -167,9 +167,9 @@ void passport_ui_render(const passport_model_t *m,int battery) {
     * firmware cannot write it or detect a tap. This view only tells the
     * other person what to do; setup happens once from a phone. */
    text(25,56,194,"NFC");
-   text(25,88,194,T("请将手机贴近背面\nNFC 标记处","Hold a phone against\nthe NFC mark on the back"));
-   text(25,140,194,T("手机会打开与二维码\n相同的链接","The phone opens the\nsame link as the QR code"));
-   text(25,192,194,passport_qr_url[0]?T("先用手机的 NFC 工具\n把链接写入一次","Write it once with an NFC\nwriter app on your phone"):T("请先在手机设置里\n填写二维码链接","Set the QR link\non your phone first"));
+   text(25,88,194,T("请将手机贴近背面\nNFC 标记处","Tap phone at the\nrear NFC mark"));
+   text(25,140,194,T("手机会打开与二维码\n相同的链接","Opens the same\nlink as the QR code"));
+   text(25,192,194,passport_qr_url[0]?T("先用手机的 NFC 工具\n把链接写入一次","Use your phone to\nwrite the link once"):T("请先在手机设置里\n填写二维码链接","Set the QR link\non your phone first"));
   }else {
    avatar(80,48);text(25,174,194,passport_config.name);text(25,200,194,passport_config.tagline);
    text(25,226,194,passport_config.contact[0]?passport_config.contact:T("在手机设置中填写联系方式","Edit contact on phone"));
