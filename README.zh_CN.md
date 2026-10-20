@@ -20,9 +20,7 @@
 
 https://github.com/user-attachments/assets/6b7cf0e2-719f-4cdf-8765-84fe11898c2d
 
-<p align="center">
-  <video src="https://github.com/user-attachments/assets/257cc789-d551-45c1-ab0a-f0e6ade3930a" width="480" controls></video>
-</p>
+https://github.com/user-attachments/assets/257cc789-d551-45c1-ab0a-f0e6ade3930a
 
 ## ✨ 小设备，九个应用
 
