@@ -19,7 +19,7 @@
 ## 🎬 发布短片
 
 <p align="center">
-  <video src="https://github.com/user-attachments/assets/10baafbc-d238-43fc-b282-f2b2d2ec04bc" width="480" controls></video>
+  <video src="https://github.com/user-attachments/assets/98c68b19-5639-4509-8200-9eec7fd255ac" width="480" controls></video>
   <video src="https://github.com/user-attachments/assets/257cc789-d551-45c1-ab0a-f0e6ade3930a" width="480" controls></video>
 </p>
 
