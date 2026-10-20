@@ -19,8 +19,8 @@
 ## 🎬 发布短片
 
 <p align="center">
-  <video src="https://github.com/user-attachments/assets/a6cce94c-55fd-4ca6-b685-a737f535eba6" width="480" controls></video>
-  <video src="https://github.com/user-attachments/assets/257cc789-d551-45c1-ab0a-f0e6ade3930a" width="480" controls></video>
+  <video src="https://github.com/benczb/esp32-uncle/releases/download/launch-films/launch-film-1.mp4" width="480" controls></video>
+  <video src="https://github.com/benczb/esp32-uncle/releases/download/launch-films/launch-film-2.mp4" width="480" controls></video>
 </p>
 
 ## ✨ 小设备，九个应用
