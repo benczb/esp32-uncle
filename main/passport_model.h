@@ -41,3 +41,18 @@ bool passport_valid_lta_key(const char *key);
 
 /* Assistant volume panel: returns true when the panel consumed the key. */
 bool passport_assistant_volume_key(passport_model_t *model,unsigned key,bool hold,int *delta);
+
+/* Profile card views cycle: 0 profile, 1 QR code, 2 NFC tap hint. */
+#define PASSPORT_CARD_VIEWS 3
+
+/* Screensaver: pure inactivity state, timestamps in microseconds (esp_timer).
+ * The display sleeps after the idle timeout unless the caller reports the
+ * device busy (audio, recording, or phone setup in progress). Any key is
+ * activity: it wakes a sleeping display and restarts the idle countdown. */
+#define PASSPORT_SCREENSAVER_IDLE_US 10000000LL
+typedef struct { int64_t last_activity_us; bool asleep; } passport_screensaver_t;
+void passport_screensaver_init(passport_screensaver_t *state,int64_t now_us);
+/* Record activity; returns true when this activity woke the display. */
+bool passport_screensaver_activity(passport_screensaver_t *state,int64_t now_us);
+/* Advance time; returns true only on the poll that puts the display to sleep. */
+bool passport_screensaver_poll(passport_screensaver_t *state,int64_t now_us,bool busy);

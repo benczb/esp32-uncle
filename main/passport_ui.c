@@ -155,18 +155,26 @@ void passport_ui_render(const passport_model_t *m,int battery) {
   hint(20,270,208,T("上下选择 确定:打开","Up/Down | OK: Open"));
   hint(20,292,208,T("长按确定:返回首页","Hold OK: Home"));
  } else if(m->page==PAGE_CARD) {
-  if(m->reply_page%2){
+  if(m->reply_page%PASSPORT_CARD_VIEWS==1){
    box(20,52,200,200); /* A white quiet zone and black modules remain scannable in both themes. */
    if(passport_qr_url[0]){
     lv_obj_t *qr=lv_qrcode_create(screen);lv_qrcode_set_size(qr,196);lv_obj_set_pos(qr,22,54);
     lv_qrcode_set_dark_color(qr,lv_color_black());lv_qrcode_set_light_color(qr,lv_color_white());lv_qrcode_set_quiet_zone(qr,true);
     if(lv_qrcode_update(qr,passport_qr_url,strlen(passport_qr_url))!=LV_RESULT_OK){lv_obj_delete(qr);text(25,120,190,T("二维码生成失败","QR generation failed"));}
    }else text(25,120,190,T("请在手机设置二维码链接","Set QR link on phone"));
+  }else if(m->reply_page%PASSPORT_CARD_VIEWS==2){
+   /* The built-in NTAG213 is a passive tag with no MCU connection: the
+    * firmware cannot write it or detect a tap. This view only tells the
+    * other person what to do; setup happens once from a phone. */
+   text(25,56,194,"NFC");
+   text(25,88,194,T("请将手机贴近背面\nNFC 标记处","Hold a phone against\nthe NFC mark on the back"));
+   text(25,140,194,T("手机会打开与二维码\n相同的链接","The phone opens the\nsame link as the QR code"));
+   text(25,192,194,passport_qr_url[0]?T("先用手机的 NFC 工具\n把链接写入一次","Write it once with an NFC\nwriter app on your phone"):T("请先在手机设置里\n填写二维码链接","Set the QR link\non your phone first"));
   }else {
    avatar(80,48);text(25,174,194,passport_config.name);text(25,200,194,passport_config.tagline);
    text(25,226,194,passport_config.contact[0]?passport_config.contact:T("在手机设置中填写联系方式","Edit contact on phone"));
   }
-  hint(20,262,210,T("确定:名片/二维码","OK: profile / QR"));
+  hint(20,262,210,T("确定:名片/二维码/NFC","OK: profile / QR / NFC"));
   hint(20,286,210,T("长按确定:返回菜单","Hold OK: Back to Menu"));
  } else if(m->page==PAGE_BRIGHTNESS){
   char level[48];snprintf(level,sizeof(level),T("亮度 %u%%","Brightness %u%%"),m->reply_page);

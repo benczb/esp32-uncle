@@ -93,3 +93,11 @@ void passport_reply_audio_stop(void);
 
 /* Main-loop worker supervision; never called while holding passport_mutex. */
 void passport_background_poll(void);
+
+/* Screensaver gate shared with the network worker: while the display is
+ * asleep, page fetches are not queued and the worker's periodic weather /
+ * train timers do not fire, so Wi-Fi stays associated in modem power-save
+ * instead of reconnecting to poll. Control work (Wi-Fi profile, language,
+ * theme, brightness) is never gated. Set by the main loop only. */
+void passport_screen_awake_set(bool awake);
+bool passport_screen_awake(void);

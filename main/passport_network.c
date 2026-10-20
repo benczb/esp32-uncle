@@ -103,6 +103,9 @@ static bool phone_relay_active(void){
 bool passport_phone_relay_active(void){return phone_relay_active();}
 static atomic_uint active_function, function_epoch;
 unsigned passport_function_active(void){return atomic_load(&active_function);}
+static atomic_bool screen_awake=true;
+void passport_screen_awake_set(bool awake){atomic_store(&screen_awake,awake);}
+bool passport_screen_awake(void){return atomic_load(&screen_awake);}
 static atomic_bool network_busy,network_worker_running,network_speech_handoff;
 static int64_t network_speech_ready_at;
 static int64_t network_voice_ready_at;
@@ -696,7 +699,7 @@ static void poll_haze(void){
  passport_dirty=true;unlock();cJSON_Delete(j);
 }
 void passport_bus_request(unsigned stop,unsigned page){
- if(!work_queue)return;
+ if(!work_queue || !passport_screen_awake())return;
  lock();
  if(stop!=bus_selected_stop || page!=bus_selected_page){
   bus_selected_stop=stop;bus_selected_page=page;atomic_fetch_add(&bus_generation,1);
@@ -910,19 +913,23 @@ static void network_worker(void *unused) {
    train_page=current;
   }
   if(request)train_due=0;
-  if((current==PAGE_HOME||current==PAGE_TRAIN) && passport_connected && esp_timer_get_time()>=train_due){
+  if((current==PAGE_HOME||current==PAGE_TRAIN) && passport_connected && passport_screen_awake() && esp_timer_get_time()>=train_due){
    train_due=esp_timer_get_time()+120000000;
    atomic_store(&network_busy,true);poll_train(current==PAGE_TRAIN);atomic_store(&network_busy,false);continue;
   }
   control_t control;
   if(control_queue && xQueueReceive(control_queue,&control,0)==pdTRUE)work=(work_t){.kind=control.kind,.wifi_profile=control.index};
-  else if(esp_timer_get_time()>=weather_due){
+  else if(passport_screen_awake() && esp_timer_get_time()>=weather_due){
    work=(work_t){.page=PAGE_WEATHER,.epoch=atomic_load(&function_epoch)};
    weather_due=esp_timer_get_time()+120000000;
   }else if(xQueueReceive(work_queue,&work,pdMS_TO_TICKS(1000))!=pdTRUE)continue;
   atomic_store(&network_busy,true);
   settings_web_poll();
   if(passport_voice_busy())continue;
+  /* Page fetches queued just before the display slept are dropped, not
+   * fetched in the background; the main loop re-requests the current page
+   * when a key wakes the display. Control work (kinds 3-7) still runs. */
+  if(!passport_screen_awake() && work.kind<=2)continue;
   bool forced_weather=work.kind==5;
   if(forced_weather){
    atomic_fetch_add(&weather_generation,1);
@@ -1006,7 +1013,7 @@ void passport_background_poll(void){
 }
 void passport_network_poll(passport_page_t page) {
  if(page==PAGE_MUSE && passport_muse_supported())return;
- if(!work_queue)return;
+ if(!work_queue || !passport_screen_awake())return;
  if(!passport_service_allowed(passport_function_active(),page))return;
  work_t work={.page=page,.epoch=atomic_load(&function_epoch)};(void)xQueueSend(work_queue,&work,0);
 }

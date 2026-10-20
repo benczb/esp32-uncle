@@ -78,9 +78,30 @@ int main(void) {
  passport_navigate(&m,2,true); assert(m.page==PAGE_HOME);
  passport_navigate(&m,0,false); assert(m.page==PAGE_CARD);
  passport_navigate(&m,2,false);assert(m.reply_page==1);
+ passport_navigate(&m,2,false);assert(m.reply_page==2);
  passport_navigate(&m,2,false);assert(m.reply_page==0);
  passport_navigate(&m,1,false);assert(m.reply_page==1);
  passport_navigate(&m,2,true);assert(m.page==PAGE_APPS);
+ /* Screensaver: sleeps only after the full idle timeout, never while busy,
+  * and any activity wakes it and restarts the countdown. */
+ passport_screensaver_t saver;passport_screensaver_init(&saver,1000000);
+ assert(!saver.asleep);
+ assert(!passport_screensaver_poll(&saver,1000000+PASSPORT_SCREENSAVER_IDLE_US-1,false));
+ assert(!saver.asleep);
+ assert(!passport_screensaver_poll(&saver,1000000+PASSPORT_SCREENSAVER_IDLE_US,true));
+ assert(!saver.asleep);
+ assert(passport_screensaver_poll(&saver,1000000+PASSPORT_SCREENSAVER_IDLE_US,false));
+ assert(saver.asleep);
+ assert(!passport_screensaver_poll(&saver,1000000+2*PASSPORT_SCREENSAVER_IDLE_US,false));
+ assert(passport_screensaver_activity(&saver,2000000));
+ assert(!saver.asleep);
+ assert(!passport_screensaver_poll(&saver,2000000+PASSPORT_SCREENSAVER_IDLE_US-1,false));
+ assert(!passport_screensaver_activity(&saver,2000000));
+ /* A backwards clock step restarts the countdown instead of sleeping. */
+ passport_screensaver_init(&saver,5000000);
+ assert(!passport_screensaver_poll(&saver,4000000,false));
+ assert(!saver.asleep);
+ assert(passport_screensaver_poll(&saver,4000000+PASSPORT_SCREENSAVER_IDLE_US,false));
  assert(passport_wifi_should_retry(1,1000,30000));
  assert(passport_wifi_should_retry(2,29999,30000));
  assert(!passport_wifi_should_retry(3,1000,30000));

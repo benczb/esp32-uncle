@@ -18,7 +18,7 @@ over the reference app's closed whole-device firmware.
 | --- | --- |
 | Home | NEA 24-hour PSI replaces the clock. Up: profile card; Down: bus arrivals; OK: app directory; hold Down: settings hotspot |
 | Directory | Up/Down: select; OK: enter; hold OK: home |
-| Profile card | Stored portrait, display name, tagline and contact text |
+| Profile card | Stored portrait, display name, tagline and contact text; OK cycles profile / QR code / NFC tap hint |
 | Athena | Existing port 4177 quota data through the companion; Up/Down: account; OK: refresh |
 | Hermes | Phone settings page submits text; Up/Down reads reply pages; hold Down to record and release to send through the configured computer bridge |
 | Muse | Official Muse AI / Muse Passport integration is in progress; no working Bluetooth chat is claimed |
@@ -46,6 +46,49 @@ The setup hotspot has no Internet access. Keep its connection when the phone
 asks. Use 2.4 GHz Wi-Fi. Settings HTTP and bridge HTTP are for trusted local
 networks, not Internet exposure. Saved passwords/tokens are not returned by the
 settings API. The random settings code changes each boot.
+
+## NFC tap-to-profile
+
+The Passport contains a passive NTAG213 NFC tag. It is not connected to the
+ESP32-C3: the firmware cannot write it, change it, or detect a tap, and no
+BSP API exists for it. The Profile card's third view (press OK twice) only
+explains the tap to the person holding a phone.
+
+To use it, write the tag once from a phone:
+
+1. Save your profile link in the phone settings page (the same **Profile QR
+   link** the QR view shows; a LinkedIn URL fits easily in the tag's
+   roughly 144 usable bytes).
+2. In an NFC writer app such as NFC Tools, choose **Write → Add a record →
+   URL/URI**, enter that same link, choose **Write**, and hold the phone
+   against the NFC mark on the back of the Passport.
+3. Test with a second phone if you can: hold it against the back and accept
+   the banner or notification to open the link. Current iPhones and most
+   Android phones read NDEF URL tags in the background with the screen on;
+   no app is needed on the other person's phone, and the Passport itself
+   can be switched off.
+
+The tag holds one fixed link. To change it, write the tag again — or point
+it at your own link page and change the destination there instead. Consider
+password-protecting or locking the tag in the writer app after writing, so
+someone else cannot overwrite it at a meetup.
+
+## Screensaver and battery
+
+On every screen, 10 seconds without a button press puts the display to
+sleep: the backlight turns off and page fetching stops until the next press.
+That press only wakes the display — it does not also navigate, toggle the
+radio, or start a recording — and the current page then refreshes: bus
+arrivals are fetched on wake (a still-fresh 60-second cache may answer
+instead), and the weather and train timers fire as soon as they are due
+rather than while the display is dark.
+
+Wi-Fi is deliberately left associated in modem power-save while the display
+sleeps. Disconnecting would trade a cheap associated idle for a full
+reconnect, re-association, and TLS session on every wake, which costs more
+power than it saves at this timeout; the saving comes from not fetching.
+Radio playback, a voice interaction, and an open phone setup page count as
+busy and keep the display awake.
 
 ## Computer bridge and assistant scope
 

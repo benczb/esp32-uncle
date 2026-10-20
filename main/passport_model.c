@@ -49,7 +49,7 @@ void passport_navigate(passport_model_t *m, unsigned key, bool hold) {
   else if(key == 1) m->station++;
   else if(key == 2) m->playing = !m->playing;
  } else if(m->page == PAGE_TRAIN || m->page == PAGE_HERMES || m->page == PAGE_MUSE){if(key==0 && m->reply_page)m->reply_page--;else if(key==1 && m->reply_page<32767)m->reply_page++;}
- else if(m->page == PAGE_CARD) {m->reply_page=(m->reply_page+1)%2;} else { if(key == 0 && m->reply_page) m->reply_page--;
+ else if(m->page == PAGE_CARD) {m->reply_page=(m->reply_page+1)%PASSPORT_CARD_VIEWS;} else { if(key == 0 && m->reply_page) m->reply_page--;
  else if(key == 1 && m->reply_page < 63) m->reply_page++; }
 }
 size_t passport_utf8_prefix(const char *text, size_t limit) {
@@ -118,6 +118,21 @@ bool passport_assistant_volume_key(passport_model_t *m,unsigned key,bool hold,in
  if(hold && key==2){m->volume_mode=false;return false;}
  if(key==2 && !hold){m->volume_mode=!m->volume_mode;return true;}
  if(m->volume_mode){*delta=key==0?10:-10;return true;}return false;
+}
+
+void passport_screensaver_init(passport_screensaver_t *state,int64_t now_us){
+ state->last_activity_us=now_us;state->asleep=false;
+}
+bool passport_screensaver_activity(passport_screensaver_t *state,int64_t now_us){
+ bool woke=state->asleep;state->asleep=false;state->last_activity_us=now_us;return woke;
+}
+bool passport_screensaver_poll(passport_screensaver_t *state,int64_t now_us,bool busy){
+ if(state->asleep || busy)return false;
+ /* A clock step backwards (or a stale timestamp) restarts the countdown
+  * instead of sleeping immediately. */
+ if(now_us<state->last_activity_us){state->last_activity_us=now_us;return false;}
+ if(now_us-state->last_activity_us<PASSPORT_SCREENSAVER_IDLE_US)return false;
+ state->asleep=true;return true;
 }
 
 void passport_clock_format(char *out,size_t capacity,unsigned weekday,unsigned hour,unsigned minute,bool synced){

@@ -31,7 +31,7 @@ https://github.com/user-attachments/assets/257cc789-d551-45c1-ab0a-f0e6ade3930a
 | 📊 AI Usage | Your connected Codex / Claude accounts' remaining quota and reset countdowns, through your own usage tracker |
 | 💬 Hermes | Phone text input, replies paged on the Passport |
 | 🪄 Muse | Official Muse AI through Muse Passport · integration in progress |
-| 🪪 Profile card | Name, photo and LinkedIn / WhatsApp / WeChat link QR; press OK to switch views |
+| 🪪 Profile card | Name, photo and LinkedIn / WhatsApp / WeChat link QR; press OK to switch views, including an NFC tap hint |
 | 📻 Radio | Six Singapore and four Malaysian station presets |
 | 🌦️ Weather | Singapore, Johor Bahru, Kuala Lumpur and Penang |
 | ⚙️ Settings | Chinese / English, profile QR, photo, Wi-Fi, city, PSI region and bus favourites |
@@ -251,6 +251,24 @@ the Passport. It is not uploaded to a photo cloud. Photos and saved settings
 survive normal restarts and battery use. A firmware erase or incompatible
 update can remove them, so keep your original photo. Uploading a replacement
 photo does not save other unsaved form edits.
+
+**NFC tap:** the Passport also carries a passive NTAG213 NFC tag, which is
+not connected to the ESP32-C3 — the firmware cannot write it or detect a tap.
+Write it once from your phone with an NFC writer app (such as NFC Tools):
+add a URL/URI record with the same link as your **Profile QR link**, then hold
+the phone against the NFC mark on the back. After that, most phones open the
+link when tapped against the back, with no app needed and even with the
+Passport switched off. Press **OK** twice on the Profile card for the NFC
+view that explains this to the other person. See the
+[application guide](docs/applications/pocket-passport.md#nfc-tap-to-profile)
+for the full setup, the one-fixed-link limit, and locking the tag.
+
+**Screensaver:** on every screen, the display sleeps after 10 seconds without
+a button press — backlight off, and bus, weather and train fetching stops
+until the next press, which only wakes the display and then refreshes the
+current page. Wi-Fi stays associated in modem power-save rather than paying
+a reconnect on every wake. Radio playback, voice use, and an open phone
+setup page keep the display awake.
 
 ### 4. Know when changes have saved
 

@@ -90,14 +90,29 @@ void app_main(void) {
  puts(usb_test_ready?"PASSPORT_TEST ready":"PASSPORT_TEST unavailable");
 #endif
  passport_model_t model={0};int tick=0,battery=-1;time_t displayed_minute=(time_t)-1;
+ passport_screensaver_t saver;passport_screensaver_init(&saver,esp_timer_get_time());
+ int64_t wake_ignore_until=0;
  for(;;) {
-  passport_background_poll();
+  if(!saver.asleep)passport_background_poll();
 #if PASSPORT_PRIVATE_USB_TEST_CONTROL
   if(usb_test_ready)usb_test_poll(&model);
 #endif
   input_t input;bool changed=false;
   if(xQueueReceive(keys,&input,pdMS_TO_TICKS(250))) {
-   if(input.event==BSP_BTN_RELEASE){
+   if(passport_screensaver_activity(&saver,esp_timer_get_time())){
+    /* The first press after the idle timeout only wakes the display:
+     * restore the backlight, re-arm fetching, and refresh the current page
+     * below (changed). The press is consumed, so it cannot also navigate,
+     * toggle the radio, or start a recording. One physical press produces
+     * several button events (release, then click), so events arriving in
+     * the short grace window after the wake are consumed as well. */
+    passport_screen_awake_set(true);
+    bsp_display_backlight(model.page==PAGE_BRIGHTNESS?model.reply_page:passport_brightness_get());
+    wake_ignore_until=esp_timer_get_time()+500000;
+    changed=true;
+   }else if(esp_timer_get_time()<wake_ignore_until){
+    /* Follow-on event of the press that woke the display; swallow it. */
+   }else if(input.event==BSP_BTN_RELEASE){
     if(input.key==BSP_BTN_DOWN)passport_voice_release();
    }else if(model.page==PAGE_MUSE && passport_muse_supported() && input.event==BSP_BTN_CLICK && input.key==BSP_BTN_OK){
     if(!passport_muse_voice_ready() || passport_muse_passkey()){
@@ -149,13 +164,24 @@ void app_main(void) {
    }
   }
   if(model.page==PAGE_RADIO && model.playing && !passport_audio_is_playing()){model.playing=false;changed=true;}
-  if(tick++%120==0){battery=bsp_battery_soc();changed=true;}
-  if(model.page==PAGE_HOME){time_t minute=time(NULL)/60;if(minute!=displayed_minute){displayed_minute=minute;changed=true;}}
-  if(changed || tick%20==0){
+  /* Screensaver, all pages: after the idle timeout the backlight goes off
+   * and fetching/rendering below freeze until the next key press. Audio
+   * playback, a voice interaction, or an open phone setup page counts as
+   * busy and keeps the display awake. Wi-Fi is left associated in modem
+   * power-save; disconnecting would cost a reconnect on every wake. */
+  bool saver_busy=(model.page==PAGE_RADIO && model.playing) || passport_audio_is_playing() ||
+   passport_voice_busy() || passport_settings_web_active();
+  if(passport_screensaver_poll(&saver,esp_timer_get_time(),saver_busy)){
+   passport_screen_awake_set(false);
+   bsp_display_backlight(0);
+  }
+  if(tick++%120==0 && !saver.asleep){battery=bsp_battery_soc();changed=true;}
+  if(model.page==PAGE_HOME && !saver.asleep){time_t minute=time(NULL)/60;if(minute!=displayed_minute){displayed_minute=minute;changed=true;}}
+  if(!saver.asleep && (changed || tick%20==0)){
    if(model.page==PAGE_BUS)passport_bus_request(model.bus_stop,model.reply_page);
    else passport_network_poll(model.page);
   }
-  if(changed || passport_dirty || tick%240==0) {
+  if(!saver.asleep && (changed || passport_dirty || tick%240==0)) {
    xSemaphoreTake(passport_mutex,portMAX_DELAY);
    if(bsp_lvgl_lock(1000)){passport_ui_render(&model,battery);bsp_lvgl_unlock();passport_dirty=false;}
    xSemaphoreGive(passport_mutex);
