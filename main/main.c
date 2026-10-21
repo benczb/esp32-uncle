@@ -1,4 +1,5 @@
 #include "passport_app.h"
+#include "passport_traffic_asset.h"
 #include "passport_muse.h"
 #include "passport_muse_voice.h"
 #include "passport_i18n.h"
@@ -141,13 +142,19 @@ void app_main(void) {
      passport_theme_request(model.reply_page);
     }else if(model.page==PAGE_TRAIN && input.event==BSP_BTN_CLICK && input.key==BSP_BTN_OK){
      passport_train_refresh_request();
+    }else if(model.page==PAGE_TRAFFIC && input.event==BSP_BTN_CLICK && input.key==BSP_BTN_OK){
+     /* OK toggles between the light and the contact QRs; returning to the
+      * light restarts the crossing cycle and its sound. */
+     model.reply_page=(model.reply_page+1)%2;
+     if(model.reply_page==0)passport_traffic_start();
     }else if(model.page==PAGE_SETTINGS && input.event==BSP_BTN_CLICK && passport_wifi_profile_count()){
      if(passport_wifi_navigate(&model,input.key,passport_wifi_profile_count()))passport_wifi_profile_request(model.wifi_profile);
     }else if(model.page==PAGE_BUS && input.event==BSP_BTN_CLICK){
      unsigned stops,pages;xSemaphoreTake(passport_mutex,portMAX_DELAY);stops=passport_bus_stop_count;pages=passport_bus_pages;xSemaphoreGive(passport_mutex);
      passport_bus_navigate(&model,input.key,stops,pages);
     }else passport_navigate(&model,input.key,input.event==BSP_BTN_LONG);
-    if(previous!=model.page){model.volume_mode=false;passport_function_select(model.page);}
+    if(previous!=model.page){model.volume_mode=false;passport_function_select(model.page);
+     if(model.page==PAGE_TRAFFIC){model.reply_page=0;model.traffic_qr=0;passport_traffic_start();}}
     if(model.page==PAGE_SETTINGS && previous!=PAGE_SETTINGS){
      unsigned current=passport_wifi_profile_current(),count=passport_wifi_profile_count();model.wifi_profile=current<count?current:0;
     }
@@ -164,13 +171,16 @@ void app_main(void) {
    }
   }
   if(model.page==PAGE_RADIO && model.playing && !passport_audio_is_playing()){model.playing=false;changed=true;}
+  /* While the crossing cycle runs, re-render every loop iteration (250 ms)
+   * so the countdown and the flashing green man stay in step with the sound. */
+  if(model.page==PAGE_TRAFFIC && passport_traffic_playing())changed=true;
   /* Screensaver, all pages: after the idle timeout the backlight goes off
    * and fetching/rendering below freeze until the next key press. Audio
    * playback, a voice interaction, or an open phone setup page counts as
    * busy and keeps the display awake. Wi-Fi is left associated in modem
    * power-save; disconnecting would cost a reconnect on every wake. */
   bool saver_busy=(model.page==PAGE_RADIO && model.playing) || passport_audio_is_playing() ||
-   passport_voice_busy() || passport_settings_web_active();
+   passport_traffic_playing() || passport_voice_busy() || passport_settings_web_active();
   if(passport_screensaver_poll(&saver,esp_timer_get_time(),saver_busy)){
    passport_screen_awake_set(false);
    bsp_display_backlight(0);

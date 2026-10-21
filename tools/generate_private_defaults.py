@@ -12,22 +12,23 @@ def generate(source, output):
     if source.exists():
         try:
             document = json.loads(source.read_text())
-            profiles = document['wifi_profiles']
-            if not isinstance(profiles, list) or not 1 <= len(profiles) <= 2:
-                raise ValueError()
-            ids = []
-            for profile in profiles:
-                kind, ssid, password = profile['id'], profile['ssid'], profile['password']
-                if kind not in ('home', 'outside') or kind in ids:
+            if 'wifi_profiles' in document:
+                profiles = document['wifi_profiles']
+                if not isinstance(profiles, list) or not 1 <= len(profiles) <= 2:
                     raise ValueError()
-                ids.append(kind)
-                if not isinstance(ssid, str) or not isinstance(password, str):
-                    raise ValueError()
-                if not 1 <= len(ssid.encode()) <= 32 or '\0' in ssid or '\0' in password:
-                    raise ValueError()
-                if not password.isascii() or not 8 <= len(password) <= 63:
-                    raise ValueError()
-            default = ids.index(document.get('default_profile', ids[0]))
+                ids = []
+                for profile in profiles:
+                    kind, ssid, password = profile['id'], profile['ssid'], profile['password']
+                    if kind not in ('home', 'outside') or kind in ids:
+                        raise ValueError()
+                    ids.append(kind)
+                    if not isinstance(ssid, str) or not isinstance(password, str):
+                        raise ValueError()
+                    if not 1 <= len(ssid.encode()) <= 32 or '\0' in ssid or '\0' in password:
+                        raise ValueError()
+                    if not password.isascii() or not 8 <= len(password) <= 63:
+                        raise ValueError()
+                default = ids.index(document.get('default_profile', ids[0]))
         except (ValueError, KeyError, TypeError, OSError):
             raise ValueError('Invalid private Wi-Fi profiles; check IDs, SSID and WPA2 password lengths') from None
     revision = hashlib.sha256(json.dumps([profiles, default], sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16] if profiles else ''
@@ -38,6 +39,17 @@ def generate(source, output):
     qr_url = document.get('qr_url', '') if source.exists() else ''
     if not isinstance(qr_url,str) or len(qr_url.encode())>256 or (qr_url and not qr_url.startswith(('https://','http://','weixin://'))):
         raise ValueError('Invalid private profile QR URL')
+    traffic_qr = document.get('traffic_qr', {}) if source.exists() else {}
+    if not isinstance(traffic_qr, dict):
+        raise ValueError('Invalid private traffic QR links')
+    traffic = {}
+    for key in ('wechat', 'linkedin', 'whatsapp'):
+        value = traffic_qr.get(key, '')
+        if not isinstance(value, str) or len(value.encode()) > 256 or \
+                (value and not value.startswith(('https://', 'http://', 'weixin://'))) or \
+                any(ord(c) < 33 or ord(c) == 127 for c in value):
+            raise ValueError('Invalid private traffic QR links')
+        traffic[key] = value
     rows = ['{' + ','.join(literal(p[k]) for k in ('id', 'ssid', 'password')) + '}' for p in profiles]
     bridge = document.get('bridge_url', '')
     lan_bridge = document.get('bridge_lan_url', '')
@@ -64,6 +76,9 @@ def generate(source, output):
     text += '#define PASSPORT_PRIVATE_WIFI_PROFILES {%s}\n' % ','.join(rows or ['{"","",""}'])
     text += '#define PASSPORT_PRIVATE_PSI_REGION %s\n' % literal(psi_region)
     text += '#define PASSPORT_PRIVATE_QR_URL %s\n' % literal(qr_url)
+    text += '#define PASSPORT_PRIVATE_TRAFFIC_QR_WECHAT %s\n' % literal(traffic['wechat'])
+    text += '#define PASSPORT_PRIVATE_TRAFFIC_QR_LINKEDIN %s\n' % literal(traffic['linkedin'])
+    text += '#define PASSPORT_PRIVATE_TRAFFIC_QR_WHATSAPP %s\n' % literal(traffic['whatsapp'])
     text += '#define PASSPORT_PRIVATE_BRIDGE_URL %s\n' % literal(bridge.rstrip('/'))
     text += '#define PASSPORT_PRIVATE_BRIDGE_TOKEN %s\n' % literal(token)
     text += '#define PASSPORT_PRIVATE_LAN_BRIDGE_URL %s\n' % literal(lan_bridge.rstrip('/'))

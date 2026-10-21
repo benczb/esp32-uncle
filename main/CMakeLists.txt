@@ -29,8 +29,9 @@ endif()
 
 idf_component_register(
     SRCS ${passport_muse_sources} "main.c" "passport_model.c" "passport_usage.c" "passport_i18n.c" "passport_ui.c" "passport_network.c" "passport_direct.c" "passport_public_data.c" "passport_train.c" "passport_train_fetch.c" "passport_voice.c" "passport_reply.c" "passport_photo.c"
-         "passport_photo_pack.c" "../assets/fonts/passport_font_16.c"
+         "passport_photo_pack.c" "passport_traffic_images.c" "../assets/fonts/passport_font_16.c"
     INCLUDE_DIRS "." "${CMAKE_CURRENT_BINARY_DIR}"
     REQUIRES bsp esp_event esp_netif esp_timer esp_wifi nvs_flash esp_http_server esp_http_client json esp_partition mbedtls esp_driver_usb_serial_jtag ${passport_muse_requires}
     EMBED_TXTFILES "passport_settings.html"
+    EMBED_FILES "../assets/music/traffic-crossing.pcm"
 )

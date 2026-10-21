@@ -38,9 +38,9 @@ int main(void) {
  passport_navigate(&shortcut,1,false);assert(shortcut.page==PAGE_BUS && shortcut.reply_page==0);
  passport_model_t m={0}; passport_navigate(&m,2,false); assert(m.page==PAGE_APPS);
  /* Both boundaries wrap, and each item remains selectable after wrapping. */
- passport_navigate(&m,0,false);assert(m.selected==8);
+ passport_navigate(&m,0,false);assert(m.selected==9);
  passport_navigate(&m,1,false);assert(m.selected==0);
- const passport_page_t expected[]={PAGE_BUS,PAGE_TRAIN,PAGE_ATHENA,PAGE_HERMES,PAGE_MUSE,PAGE_CARD,PAGE_RADIO,PAGE_WEATHER,PAGE_PREFERENCES};
+ const passport_page_t expected[]={PAGE_BUS,PAGE_TRAIN,PAGE_ATHENA,PAGE_HERMES,PAGE_MUSE,PAGE_CARD,PAGE_RADIO,PAGE_WEATHER,PAGE_PREFERENCES,PAGE_TRAFFIC};
  for(unsigned i=0;i<3*PASSPORT_APP_COUNT;i++){
   assert(m.selected==i%PASSPORT_APP_COUNT);
   passport_navigate(&m,2,false);assert(m.page==expected[i%PASSPORT_APP_COUNT]);
@@ -72,8 +72,8 @@ int main(void) {
  passport_navigate(&settings,2,true);assert(settings.page==PAGE_PREFERENCES);
  assert(m.selected==0);
  for(unsigned i=0;i<3*PASSPORT_APP_COUNT;i++){passport_navigate(&m,0,false);assert(m.selected==(PASSPORT_APP_COUNT-1-i%PASSPORT_APP_COUNT));}
- passport_navigate(&m,0,false);assert(m.selected==8);
- passport_navigate(&m,2,false);assert(m.page==PAGE_PREFERENCES);
+ passport_navigate(&m,0,false);assert(m.selected==9);
+ passport_navigate(&m,2,false);assert(m.page==PAGE_TRAFFIC);
  passport_navigate(&m,2,true); assert(m.page==PAGE_APPS);
  passport_navigate(&m,2,true); assert(m.page==PAGE_HOME);
  passport_navigate(&m,0,false); assert(m.page==PAGE_CARD);
@@ -102,6 +102,41 @@ int main(void) {
  assert(!passport_screensaver_poll(&saver,4000000,false));
  assert(!saver.asleep);
  assert(passport_screensaver_poll(&saver,4000000+PASSPORT_SCREENSAVER_IDLE_US,false));
+ /* Traffic Light cycle: red during the soft locator sound, then green with
+  * a countdown, flashing for the last five seconds, then done. */
+ {
+  const int64_t total=35921312LL;
+  assert(passport_traffic_phase(0,total)==PASSPORT_TRAFFIC_PHASE_RED);
+  assert(passport_traffic_phase(PASSPORT_TRAFFIC_RED_US-1,total)==PASSPORT_TRAFFIC_PHASE_RED);
+  assert(passport_traffic_phase(PASSPORT_TRAFFIC_RED_US,total)==PASSPORT_TRAFFIC_PHASE_GREEN);
+  assert(passport_traffic_phase(total-1,total)==PASSPORT_TRAFFIC_PHASE_GREEN);
+  assert(passport_traffic_phase(total,total)==PASSPORT_TRAFFIC_PHASE_DONE);
+  assert(passport_traffic_phase(-5,total)==PASSPORT_TRAFFIC_PHASE_RED);
+  assert(passport_traffic_phase(0,0)==PASSPORT_TRAFFIC_PHASE_DONE);
+  assert(passport_traffic_countdown(0,total)==0);
+  assert(passport_traffic_countdown(PASSPORT_TRAFFIC_RED_US,total)==33);
+  assert(passport_traffic_countdown(total-1000000,total)==1);
+  assert(passport_traffic_countdown(total-1,total)==1);
+  assert(passport_traffic_countdown(total,total)==0);
+  assert(!passport_traffic_green_lit(0,total));
+  assert(passport_traffic_green_lit(PASSPORT_TRAFFIC_RED_US,total));
+  assert(passport_traffic_green_lit(total-PASSPORT_TRAFFIC_FLASH_US-1,total));
+  /* Flashing window (last 5 s): 600 ms period, lit for the first 360 ms.
+   * At elapsed 30921312 the remaining time is exactly 5 s and the phase
+   * within the period is 321312 us (lit); 100 ms later it is 421312 (dark). */
+  assert(passport_traffic_green_lit(30921312,total));
+  assert(!passport_traffic_green_lit(31021312,total));
+  assert(!passport_traffic_green_lit(total,total));
+  /* Navigation: Up/Down cycle the contact QR selection with wraparound. */
+  passport_model_t tm={0};tm.page=PAGE_TRAFFIC;
+  passport_navigate(&tm,1,false);assert(tm.traffic_qr==1);
+  passport_navigate(&tm,1,false);assert(tm.traffic_qr==2);
+  passport_navigate(&tm,1,false);assert(tm.traffic_qr==0);
+  passport_navigate(&tm,0,false);assert(tm.traffic_qr==2);
+  passport_navigate(&tm,2,false);assert(tm.traffic_qr==2 && tm.reply_page==0);
+  assert(passport_service_allowed(PAGE_TRAFFIC,PAGE_TRAFFIC));
+  assert(!passport_service_allowed(PAGE_TRAFFIC,PAGE_BUS));
+ }
  assert(passport_wifi_should_retry(1,1000,30000));
  assert(passport_wifi_should_retry(2,29999,30000));
  assert(!passport_wifi_should_retry(3,1000,30000));

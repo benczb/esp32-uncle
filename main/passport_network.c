@@ -31,6 +31,8 @@
 #include <sys/time.h>
 passport_config_t passport_config;
 char passport_qr_url[257];
+char passport_traffic_qr[3][257];
+static const char *const traffic_qr_keys[3]={"tq_wechat","tq_linkedin","tq_whatsapp"};
 SemaphoreHandle_t passport_mutex;
 bool passport_connected,passport_has_avatar;
 char passport_ip[20]="192.168.4.1";
@@ -83,6 +85,9 @@ bool passport_weather_refresh_request(void){
 }
 static atomic_uint audio_generation;
 static atomic_bool audio_desired;
+static atomic_bool traffic_desired;
+static atomic_uint traffic_generation;
+static int64_t traffic_started_us;
 static atomic_uint audio_station;
 static atomic_bool reply_audio;
 static atomic_uint speech_end_generation;
@@ -119,7 +124,7 @@ static atomic_bool audio_worker_running;
 bool passport_audio_worker_active(void){return atomic_load(&audio_worker_running);}
 static void audio_worker(void *unused);
 static void audio_worker_start_if_needed(void){
- if(passport_muse_speech_busy() || (!atomic_load(&audio_desired) && !passport_voice_needs_worker()) ||
+ if(passport_muse_speech_busy() || (!atomic_load(&audio_desired) && !atomic_load(&traffic_desired) && !passport_voice_needs_worker()) ||
     atomic_exchange(&audio_worker_running,true))return;
  if(xTaskCreate(audio_worker,"passport_pcm",6144,NULL,3,NULL)!=pdPASS){
   atomic_store(&audio_worker_running,false);
@@ -142,6 +147,21 @@ void passport_function_select(passport_page_t page){
  if(previous==PAGE_MUSE){passport_muse_leave();passport_muse_voice_leave();}
  if(page==PAGE_MUSE)passport_muse_enter();
  if(page!=PAGE_RADIO){atomic_store(&reply_audio,false);atomic_store(&audio_desired,false);atomic_fetch_add(&audio_generation,1);}
+ if(page!=PAGE_TRAFFIC && atomic_exchange(&traffic_desired,false))atomic_fetch_add(&traffic_generation,1);
+}
+void passport_traffic_start(void){
+ traffic_started_us=esp_timer_get_time();
+ atomic_fetch_add(&traffic_generation,1);
+ atomic_store(&traffic_desired,true);
+ audio_worker_start_if_needed();
+}
+void passport_traffic_stop(void){
+ if(atomic_exchange(&traffic_desired,false))atomic_fetch_add(&traffic_generation,1);
+}
+bool passport_traffic_playing(void){return atomic_load(&traffic_desired);}
+int64_t passport_traffic_elapsed_us(void){
+ if(!traffic_started_us)return -1;
+ return esp_timer_get_time()-traffic_started_us;
 }
 
 static void phone_relay_renew(void){atomic_store(&phone_relay_deadline,((uint32_t)(esp_timer_get_time()/1000)+8000)|1u);}
@@ -219,6 +239,10 @@ void passport_config_load(void) {
  uint8_t language=0;if(nvs_get_u8(store,"language",&language)==ESP_OK)passport_language_set(language);
  size_t qr_size=sizeof(passport_qr_url);
  if(nvs_get_str(store,"qr_url",passport_qr_url,&qr_size)!=ESP_OK)snprintf(passport_qr_url,sizeof(passport_qr_url),"%s",PASSPORT_PRIVATE_QR_URL);
+ {static const char *const traffic_defaults[3]={PASSPORT_PRIVATE_TRAFFIC_QR_WECHAT,PASSPORT_PRIVATE_TRAFFIC_QR_LINKEDIN,PASSPORT_PRIVATE_TRAFFIC_QR_WHATSAPP};
+  for(unsigned i=0;i<3;i++){size_t size=sizeof(passport_traffic_qr[i]);
+   if(nvs_get_str(store,traffic_qr_keys[i],passport_traffic_qr[i],&size)!=ESP_OK)
+    snprintf(passport_traffic_qr[i],sizeof(passport_traffic_qr[i]),"%s",traffic_defaults[i]);}}
  size_t n=sizeof(passport_config);passport_config_t loaded;
  if(nvs_get_blob(store,"config",&loaded,&n)==ESP_OK && n==sizeof(loaded)) {
   /* Stored fields are validated before persistence. Reject unterminated blobs. */
@@ -323,6 +347,9 @@ static esp_err_t config_get(httpd_req_t *r) {
  cJSON_AddBoolToObject(j,"lta_key_configured",lta_account_key[0]!=0);
  cJSON_AddNumberToObject(j,"language",passport_language_get());
  cJSON_AddStringToObject(j,"qr_url",passport_qr_url);
+ cJSON_AddStringToObject(j,"qr_wechat",passport_traffic_qr[0]);
+ cJSON_AddStringToObject(j,"qr_linkedin",passport_traffic_qr[1]);
+ cJSON_AddStringToObject(j,"qr_whatsapp",passport_traffic_qr[2]);
  cJSON_AddBoolToObject(j,"connected",passport_connected);
  cJSON_AddBoolToObject(j,"clock_synced",time(NULL)>=1700000000);
  cJSON_AddNumberToObject(j,"theme",passport_config.theme);
@@ -345,10 +372,14 @@ static esp_err_t config_post(httpd_req_t *r) {
  cJSON *j=cJSON_Parse(body);free(body);if(!j)return fail(r,"400 Bad Request","{}");
  lock();passport_config_t next=passport_config;haze_location_t next_haze=haze_location;bus_config_t next_bus=bus_config;
  unsigned next_language=passport_language_get();char next_qr[257];snprintf(next_qr,sizeof(next_qr),"%s",passport_qr_url);
+ char next_traffic[3][257];for(unsigned i=0;i<3;i++)snprintf(next_traffic[i],sizeof(next_traffic[i]),"%s",passport_traffic_qr[i]);
  char next_lta[129];snprintf(next_lta,sizeof(next_lta),"%s",lta_account_key);
  bool valid=set_field(j,"lta_api_key",next_lta,sizeof(next_lta),true) && passport_valid_lta_key(next_lta);
  valid=valid && set_field(j,"qr_url",next_qr,sizeof(next_qr),false);
  valid=valid && passport_valid_qr_url(next_qr);
+ {static const char *const traffic_fields[3]={"qr_wechat","qr_linkedin","qr_whatsapp"};
+  for(unsigned i=0;i<3;i++){valid=valid && set_field(j,traffic_fields[i],next_traffic[i],sizeof(next_traffic[i]),false);
+   valid=valid && passport_valid_qr_url(next_traffic[i]);}}
  cJSON *language=cJSON_GetObjectItemCaseSensitive(j,"language");
  if(language){if(!cJSON_IsNumber(language)||(language->valuedouble!=0&&language->valuedouble!=1))valid=false;else next_language=language->valueint;}
  cJSON *stops=cJSON_GetObjectItemCaseSensitive(j,"bus_stops");
@@ -396,7 +427,7 @@ static esp_err_t config_post(httpd_req_t *r) {
  if(valid && chosen_profile<passport_wifi_profile_count() && cJSON_IsString(entered_password) && entered_password->valuestring[0]){
   valid=store && nvs_set_str(store,wifi_password_key(chosen_profile),next.password)==ESP_OK;
  }
- if(valid && store && nvs_set_str(store,"lta_api_key",next_lta)==ESP_OK && nvs_set_str(store,"qr_url",next_qr)==ESP_OK && nvs_set_u8(store,"language",next_language)==ESP_OK && nvs_set_blob(store,"config",&next,sizeof(next))==ESP_OK && nvs_set_blob(store,"haze",&next_haze,sizeof(next_haze))==ESP_OK && nvs_set_blob(store,"bus",&next_bus,sizeof(next_bus))==ESP_OK && nvs_commit(store)==ESP_OK){if(chosen_profile<passport_wifi_profile_count() && cJSON_IsString(entered_password) && entered_password->valuestring[0])snprintf(wifi_password_override[chosen_profile],sizeof(wifi_password_override[chosen_profile]),"%s",next.password);passport_language_set(next_language);localize_network_status();snprintf(passport_qr_url,sizeof(passport_qr_url),"%s",next_qr);passport_weather[0]=passport_athena[0]=0;passport_config=next;passport_photo_invalidate();snprintf(lta_account_key,sizeof(lta_account_key),"%s",next_lta);atomic_store(&wifi_current,wifi_profile_for_ssid(next.ssid));haze_location=next_haze;bus_config=next_bus;passport_bus_stop_count=next_bus.count;passport_bus_rows=0;passport_bus_pages=1;atomic_fetch_add(&bus_generation,1);passport_psi_value=-1;strcpy(passport_haze_status,T("正在更新","Updating"));passport_dirty=true;}
+ if(valid && store && nvs_set_str(store,"lta_api_key",next_lta)==ESP_OK && nvs_set_str(store,"qr_url",next_qr)==ESP_OK && nvs_set_str(store,"tq_wechat",next_traffic[0])==ESP_OK && nvs_set_str(store,"tq_linkedin",next_traffic[1])==ESP_OK && nvs_set_str(store,"tq_whatsapp",next_traffic[2])==ESP_OK && nvs_set_u8(store,"language",next_language)==ESP_OK && nvs_set_blob(store,"config",&next,sizeof(next))==ESP_OK && nvs_set_blob(store,"haze",&next_haze,sizeof(next_haze))==ESP_OK && nvs_set_blob(store,"bus",&next_bus,sizeof(next_bus))==ESP_OK && nvs_commit(store)==ESP_OK){if(chosen_profile<passport_wifi_profile_count() && cJSON_IsString(entered_password) && entered_password->valuestring[0])snprintf(wifi_password_override[chosen_profile],sizeof(wifi_password_override[chosen_profile]),"%s",next.password);passport_language_set(next_language);localize_network_status();snprintf(passport_qr_url,sizeof(passport_qr_url),"%s",next_qr);for(unsigned i=0;i<3;i++)snprintf(passport_traffic_qr[i],sizeof(passport_traffic_qr[i]),"%s",next_traffic[i]);passport_weather[0]=passport_athena[0]=0;passport_config=next;passport_photo_invalidate();snprintf(lta_account_key,sizeof(lta_account_key),"%s",next_lta);atomic_store(&wifi_current,wifi_profile_for_ssid(next.ssid));haze_location=next_haze;bus_config=next_bus;passport_bus_stop_count=next_bus.count;passport_bus_rows=0;passport_bus_pages=1;atomic_fetch_add(&bus_generation,1);passport_psi_value=-1;strcpy(passport_haze_status,T("正在更新","Updating"));passport_dirty=true;}
  else valid=false;
  unlock();cJSON_Delete(j);
  if(!valid)return fail(r,"400 Bad Request","{\"error\":\"资料无效或保存失败。地址需为局域网 http:// 地址\"}");
@@ -1048,7 +1079,7 @@ static void audio_worker(void *unused) {
   if(atomic_load(&phone_relay_enabled) && !phone_relay_active()){
    atomic_store(&phone_relay_enabled,false);atomic_store(&audio_desired,false);atomic_fetch_add(&audio_generation,1);
   }
-  if(!atomic_load(&audio_desired)){
+  if(!atomic_load(&audio_desired) && !atomic_load(&traffic_desired)){
    lock();
    if(!atomic_load(&audio_desired) && phone_pcm){vQueueDelete(phone_pcm);phone_pcm=NULL;}
    unlock();
@@ -1061,6 +1092,34 @@ static void audio_worker(void *unused) {
     vTaskDelete(NULL);return;
    }
    vTaskDelay(pdMS_TO_TICKS(100));continue;
+  }
+  if(atomic_load(&traffic_desired)){
+   /* Local playback of the embedded crossing recording; no network or
+    * bridge is involved. The asset is unsigned 8-bit PCM at the BSP's
+    * 16 kHz rate and is upconverted to 16-bit samples as it is written. */
+   unsigned traffic_gen=atomic_load(&traffic_generation);
+   if(!audio_ok)audio_ok=bsp_audio_init()==ESP_OK;
+   if(!audio_ok || bsp_audio_set_format(16000,16,1)!=ESP_OK){atomic_store(&traffic_desired,false);continue;}
+   extern const uint8_t traffic_pcm_start[] asm("_binary_traffic_crossing_pcm_start");
+   extern const uint8_t traffic_pcm_end[] asm("_binary_traffic_crossing_pcm_end");
+   const uint8_t *src=traffic_pcm_start;
+   size_t total=(size_t)(traffic_pcm_end-traffic_pcm_start),offset=0;
+   int16_t out[1024];
+   while(offset<total && atomic_load(&traffic_desired) && traffic_gen==atomic_load(&traffic_generation)){
+    size_t chunk=total-offset;if(chunk>1024)chunk=1024;
+    for(size_t i=0;i<chunk;i++)out[i]=(int16_t)(((int)src[offset+i]-128)<<8);
+    bsp_audio_set_volume(atomic_load(&audio_volume));
+    if(bsp_audio_write((uint8_t *)out,chunk*2)!=ESP_OK)break;
+    atomic_fetch_add(&audio_bytes_written,(unsigned)(chunk*2));
+    offset+=chunk;
+   }
+   if(traffic_gen==atomic_load(&traffic_generation)){
+    atomic_store(&traffic_desired,false);
+    /* One extra render flips the page from the finished light cycle to
+     * the contact QR view. */
+    lock();passport_dirty=true;unlock();
+   }
+   continue;
   }
   unsigned generation=atomic_load(&audio_generation),station=atomic_load(&audio_station);
   if((phone_relay_active() || atomic_load(&reply_audio)) && (atomic_load(&network_worker_running) || esp_timer_get_time()<network_voice_ready_at)){vTaskDelay(pdMS_TO_TICKS(20));continue;}

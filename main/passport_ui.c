@@ -1,4 +1,5 @@
 #include "passport_app.h"
+#include "passport_traffic_asset.h"
 #include "passport_muse.h"
 #include "passport_muse_voice.h"
 #include "passport_i18n.h"
@@ -12,14 +13,15 @@ LV_FONT_DECLARE(passport_font_16);
 static lv_obj_t *screen;
 static uint32_t ink, paper, edge, accent;
 static lv_image_dsc_t portrait;
+static lv_image_dsc_t traffic_img;
 /* One English face/size for every screen; fallback keeps mixed CJK text visible. */
 static const lv_font_t *ui_font(void){
  static lv_font_t english;static bool initialized;
  if(!initialized){english=lv_font_montserrat_16;english.fallback=&passport_font_16;initialized=true;}
  return passport_language_get()?&english:&passport_font_16;
 }
-static const char *titles_zh[]={"随身护照","应用目录","个人名片","AI 用量","Hermes 助手","Muse 助手","城市收音机","本地天气","巴士到站","Wi-Fi 设置","列车警报","外观","设置","亮度","语言"};
-static const char *titles_en[]={"Pocket Passport","Menu","Profile card","AI Usage","Hermes","Muse","SG/MY radio","Weather","Bus arrivals","Wi-Fi","Train alerts","Appearance","Settings","Brightness","Language"};
+static const char *titles_zh[]={"随身护照","应用目录","个人名片","AI 用量","Hermes 助手","Muse 助手","城市收音机","本地天气","巴士到站","Wi-Fi 设置","列车警报","外观","设置","亮度","语言","交通灯"};
+static const char *titles_en[]={"Pocket Passport","Menu","Profile card","AI Usage","Hermes","Muse","SG/MY radio","Weather","Bus arrivals","Wi-Fi","Train alerts","Appearance","Settings","Brightness","Language","Traffic light"};
 static lv_obj_t *box(int x,int y,int w,int h) {
  lv_obj_t *o=lv_obj_create(screen); lv_obj_remove_style_all(o);
  lv_obj_set_pos(o,x,y);lv_obj_set_size(o,w,h);
@@ -72,6 +74,52 @@ static void avatar(int x,int y) {
   }
  }
 }
+/* Traffic Light page helpers. The housing is drawn in its own colours in
+ * every theme, like the real signal: black box, dark lenses, LED dots. */
+static void traffic_dark_lens(int x,int y) {
+ lv_obj_t *o=lv_obj_create(screen);lv_obj_remove_style_all(o);
+ lv_obj_set_pos(o,x,y);lv_obj_set_size(o,PASSPORT_TRAFFIC_LENS_SIZE,PASSPORT_TRAFFIC_LENS_SIZE);
+ lv_obj_set_style_radius(o,PASSPORT_TRAFFIC_LENS_SIZE/2,0);
+ lv_obj_set_style_bg_color(o,lv_color_hex(0x060609),0);lv_obj_set_style_bg_opa(o,LV_OPA_COVER,0);
+ lv_obj_set_style_border_width(o,2,0);lv_obj_set_style_border_color(o,lv_color_hex(0x2e3036),0);
+ lv_obj_remove_flag(o,LV_OBJ_FLAG_SCROLLABLE);
+}
+static void traffic_lens_image(int x,int y,const uint16_t *data) {
+ traffic_img=(lv_image_dsc_t){.header={.magic=LV_IMAGE_HEADER_MAGIC,.cf=LV_COLOR_FORMAT_RGB565,
+   .w=PASSPORT_TRAFFIC_LENS_SIZE,.h=PASSPORT_TRAFFIC_LENS_SIZE,.stride=PASSPORT_TRAFFIC_LENS_SIZE*2},
+   .data_size=PASSPORT_TRAFFIC_LENS_SIZE*PASSPORT_TRAFFIC_LENS_SIZE*2,.data=(const uint8_t *)data};
+ lv_obj_t *im=lv_image_create(screen);lv_image_set_src(im,&traffic_img);lv_obj_set_pos(im,x,y);
+}
+static const char *const traffic_digit_rows[10][7]={
+ {"01110","10001","10011","10101","11001","10001","01110"},
+ {"00100","01100","00100","00100","00100","00100","01110"},
+ {"01110","10001","00001","00010","00100","01000","11111"},
+ {"11111","00010","00100","00010","00001","10001","01110"},
+ {"00010","00110","01010","10010","11111","00010","00010"},
+ {"11111","10000","11110","00001","00001","10001","01110"},
+ {"00110","01000","10000","11110","10001","10001","01110"},
+ {"11111","00001","00010","00100","01000","01000","01000"},
+ {"01110","10001","10001","01110","10001","10001","01110"},
+ {"01110","10001","10001","01111","00001","00010","01100"}};
+/* Red LED countdown in the top lens, dot-matrix digits like the real
+ * Singapore countdown signals. Centre is the lens centre. */
+static void traffic_countdown(int cx,int cy,unsigned value) {
+ char digits[3];snprintf(digits,sizeof(digits),"%u",value%100);
+ unsigned count=strlen(digits);
+ int pitch=9,dot=6,digit_w=5*pitch,total=count*digit_w+(count-1)*6;
+ int x0=cx-total/2,y0=cy-7*pitch/2;
+ for(unsigned d=0;d<count;d++){
+  const char *const *rows=traffic_digit_rows[digits[d]-'0'];
+  for(unsigned r=0;r<7;r++)for(unsigned c=0;c<5;c++){
+   if(rows[r][c]!='1')continue;
+   lv_obj_t *o=lv_obj_create(screen);lv_obj_remove_style_all(o);
+   int x=x0+(int)d*(digit_w+6)+(int)c*pitch,y=y0+(int)r*pitch;
+   lv_obj_set_pos(o,x,y);lv_obj_set_size(o,dot,dot);lv_obj_set_style_radius(o,dot/2,0);
+   lv_obj_set_style_bg_color(o,lv_color_hex(0xff2d20),0);lv_obj_set_style_bg_opa(o,LV_OPA_COVER,0);
+   lv_obj_remove_flag(o,LV_OBJ_FLAG_SCROLLABLE);
+  }
+ }
+}
 /* Page boundaries use the actual current font and LVGL wrapping, never byte
  * slices. Seven rows leave room for source freshness and navigation. */
 static size_t train_span(const char *text_value){
@@ -98,6 +146,7 @@ void passport_ui_render(const passport_model_t *m,int battery) {
  /* An LVGL image retains its source pointer: delete it and drop the cache
   * before returning display RAM to the heap. Storage loading is a worker job. */
  lv_image_cache_drop(&portrait);
+ lv_image_cache_drop(&traffic_img);
  if(passport_photo_refresh_pending() || (m->page!=PAGE_HOME && m->page!=PAGE_CARD)){passport_photo_release();portrait.data=NULL;}
  /* Rebuilds must cover old glyphs independently of the inherited theme. */
  lv_obj_set_style_bg_opa(screen,LV_OPA_COVER,0);
@@ -143,8 +192,8 @@ void passport_ui_render(const passport_model_t *m,int battery) {
   hint(18,269,210,T("上:名片 下:巴士","Up: Card Down: Bus"));
   hint(18,290,210,T("确定:应用菜单","OK: Menu"));
  } else if(m->page==PAGE_APPS) {
-  static const char *apps_zh[]={"01  巴士到站","02  列车警报","03  AI 用量","04  Hermes 助手","05  Muse 助手","06  个人名片","07  城市收音机","08  本地天气","09  设置"};
-  static const char *apps_en[]={"01  Bus arrivals","02  Train alerts","03  AI Usage","04  Hermes","05  Muse","06  Profile card","07  SG/MY radio","08  Weather","09  Settings"};
+  static const char *apps_zh[]={"01  巴士到站","02  列车警报","03  AI 用量","04  Hermes 助手","05  Muse 助手","06  个人名片","07  城市收音机","08  本地天气","09  设置","10  交通灯"};
+  static const char *apps_en[]={"01  Bus arrivals","02  Train alerts","03  AI Usage","04  Hermes","05  Muse","06  Profile card","07  SG/MY radio","08  Weather","09  Settings","10  Traffic light"};
   unsigned first=m->selected>=8?m->selected-7:0;
   for(unsigned i=first;i<PASSPORT_APP_COUNT && i<first+8;i++) {
    int y=48+(i-first)*28;
@@ -296,6 +345,44 @@ void passport_ui_render(const passport_model_t *m,int battery) {
   char page[48];snprintf(page,sizeof(page),T("%u/%u%s","%u/%u%s"),selected+1,pages,passport_train_stale?T(" · 不完整/缓存"," | partial/cached"):"");text(22,239,196,page);
   hint(22,263,196,T("上下翻页 确定刷新","Up/Down | OK: Refresh"));
   hint(22,287,198,T("长按确定:返回菜单","Hold OK: Back to Menu"));
+ } else if(m->page==PAGE_TRAFFIC) {
+  lv_obj_t *housing=box(4,44,232,272);
+  lv_obj_set_style_bg_color(housing,lv_color_hex(0x050506),0);
+  lv_obj_set_style_border_color(housing,lv_color_hex(0x2c2e33),0);
+  lv_obj_set_style_radius(housing,14,0);
+  int64_t elapsed=passport_traffic_elapsed_us();if(elapsed<0)elapsed=0;
+  passport_traffic_phase_t phase=passport_traffic_phase(elapsed,PASSPORT_TRAFFIC_DURATION_US);
+  bool qr_view=m->reply_page%2==1 || phase==PASSPORT_TRAFFIC_PHASE_DONE;
+  if(!qr_view){
+   /* Light view: red man for the soft locator sound, then the green man
+    * with the countdown, flashing at the end of the cycle. */
+   if(phase==PASSPORT_TRAFFIC_PHASE_RED)traffic_lens_image(60,48,passport_traffic_lens_red);
+   else {traffic_dark_lens(60,48);traffic_countdown(120,108,passport_traffic_countdown(elapsed,PASSPORT_TRAFFIC_DURATION_US));}
+   if(phase==PASSPORT_TRAFFIC_PHASE_GREEN && passport_traffic_green_lit(elapsed,PASSPORT_TRAFFIC_DURATION_US))
+    traffic_lens_image(60,172,passport_traffic_lens_green);
+   else traffic_dark_lens(60,172);
+   hint(20,295,210,T("确定:联系二维码","OK: Contact QRs"));
+  } else {
+   static const char *const qr_names_zh[3]={"微信","领英","WhatsApp"};
+   static const char *const qr_names_en[3]={"WeChat","LinkedIn","WhatsApp"};
+   unsigned which=m->traffic_qr%PASSPORT_TRAFFIC_QR_COUNT;
+   const char *url=passport_traffic_qr[which];
+   lv_obj_t *name=text(25,54,194,passport_language_get()?qr_names_en[which]:qr_names_zh[which]);
+   lv_obj_set_style_text_align(name,LV_TEXT_ALIGN_CENTER,0);
+   if(url[0]){
+    lv_obj_t *frame=box(35,84,170,170);lv_obj_set_style_bg_color(frame,lv_color_white(),0);
+    lv_obj_set_style_border_color(frame,lv_color_white(),0);
+    lv_obj_t *qr=lv_qrcode_create(screen);lv_qrcode_set_size(qr,166);lv_obj_set_pos(qr,37,86);
+    lv_qrcode_set_dark_color(qr,lv_color_black());lv_qrcode_set_light_color(qr,lv_color_white());lv_qrcode_set_quiet_zone(qr,true);
+    if(lv_qrcode_update(qr,url,strlen(url))!=LV_RESULT_OK){lv_obj_delete(qr);text(25,150,190,T("二维码生成失败","QR generation failed"));}
+   } else {
+    text(25,140,194,T("请先在手机设置里\n填写这个链接","Set this link in the\nphone Settings first"));
+   }
+   char pos[24];snprintf(pos,sizeof(pos),"%u / %u",which+1,PASSPORT_TRAFFIC_QR_COUNT);
+   lv_obj_t *indicator=text(25,262,194,pos);lv_obj_set_style_text_align(indicator,LV_TEXT_ALIGN_CENTER,0);
+   hint(20,282,210,T("上下:切换二维码","Up/Down: Switch QR"));
+   hint(20,302,210,T("确定:交通灯","OK: Traffic light"));
+  }
  } else if(m->page==PAGE_WEATHER) {
   text(24,56,192,passport_config.city);text(24,100,192,passport_weather[0]?passport_weather:T("等待天气数据","Waiting for weather"));
   hint(22,218,198,T("来源:Open-Meteo\n室外天气 · 非机内传感器","Open-Meteo\nOutdoor weather"));

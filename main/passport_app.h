@@ -28,6 +28,15 @@ void passport_network_poll(passport_page_t page);
 void passport_audio_request(bool playing, unsigned station);
 
 extern char passport_qr_url[257];
+/* Traffic Light page contact QRs: 0 WeChat, 1 LinkedIn, 2 WhatsApp. Values
+ * come from phone Settings or the per-computer private defaults; they are
+ * personal data and are never committed to the repository. */
+extern char passport_traffic_qr[3][257];
+void passport_traffic_start(void);
+void passport_traffic_stop(void);
+bool passport_traffic_playing(void);
+/* Microseconds since the current cycle started; -1 before the first start. */
+int64_t passport_traffic_elapsed_us(void);
 void passport_language_request(unsigned language);
 void passport_theme_request(unsigned theme);
 unsigned passport_brightness_get(void);

@@ -22,7 +22,7 @@ https://github.com/user-attachments/assets/6b7cf0e2-719f-4cdf-8765-84fe11898c2d
 
 https://github.com/user-attachments/assets/257cc789-d551-45c1-ab0a-f0e6ade3930a
 
-## ✨ One little device, nine apps
+## ✨ One little device, ten apps
 
 | App | What it brings |
 | --- | --- |
@@ -35,6 +35,7 @@ https://github.com/user-attachments/assets/257cc789-d551-45c1-ab0a-f0e6ade3930a
 | 📻 Radio | Six Singapore and four Malaysian station presets |
 | 🌦️ Weather | Singapore, Johor Bahru, Kuala Lumpur and Penang |
 | ⚙️ Settings | Chinese / English, profile QR, photo, Wi-Fi, city, PSI region and bus favourites |
+| 🚦 Traffic light | A Singapore pedestrian crossing that plays the real push-button sound: red man, then green man with countdown; ends on your WeChat / LinkedIn / WhatsApp QRs |
 
 The homepage header shows the local day and 24-hour time, such as **MON 12:55**.
 It updates each minute; **--- --:--** means the clock has not synchronised.

@@ -17,7 +17,7 @@ bool passport_relay_pcm_frame_valid(const uint8_t *frame,size_t bytes,uint32_t g
  return received==generation;
 }
 static const passport_page_t apps[] = { PAGE_BUS, PAGE_TRAIN, PAGE_ATHENA, PAGE_HERMES,
- PAGE_MUSE, PAGE_CARD, PAGE_RADIO, PAGE_WEATHER, PAGE_PREFERENCES };
+ PAGE_MUSE, PAGE_CARD, PAGE_RADIO, PAGE_WEATHER, PAGE_PREFERENCES, PAGE_TRAFFIC };
 void passport_navigate(passport_model_t *m, unsigned key, bool hold) {
  if (key > 2) return;
  if (hold) { if(key == 2) {
@@ -48,6 +48,11 @@ void passport_navigate(passport_model_t *m, unsigned key, bool hold) {
   if(key == 0 && m->station) m->station--;
   else if(key == 1) m->station++;
   else if(key == 2) m->playing = !m->playing;
+ } else if(m->page == PAGE_TRAFFIC) {
+  /* Up/Down choose which contact QR the QR view shows; OK (handled by the
+   * main loop) toggles between the light and the QR view. */
+  if(key == 0) m->traffic_qr=(m->traffic_qr+PASSPORT_TRAFFIC_QR_COUNT-1)%PASSPORT_TRAFFIC_QR_COUNT;
+  else if(key == 1) m->traffic_qr=(m->traffic_qr+1)%PASSPORT_TRAFFIC_QR_COUNT;
  } else if(m->page == PAGE_TRAIN || m->page == PAGE_HERMES || m->page == PAGE_MUSE){if(key==0 && m->reply_page)m->reply_page--;else if(key==1 && m->reply_page<32767)m->reply_page++;}
  else if(m->page == PAGE_CARD) {m->reply_page=(m->reply_page+1)%PASSPORT_CARD_VIEWS;} else { if(key == 0 && m->reply_page) m->reply_page--;
  else if(key == 1 && m->reply_page < 63) m->reply_page++; }
@@ -92,7 +97,7 @@ bool passport_resolve_profile_password(char *out,size_t cap,const char *stored,c
 }
 
 bool passport_service_allowed(passport_page_t active,passport_page_t requested){
- if((unsigned)active>PAGE_LANGUAGE || (unsigned)requested>PAGE_LANGUAGE)return false;
+ if((unsigned)active>PAGE_TRAFFIC || (unsigned)requested>PAGE_TRAFFIC)return false;
  if(requested==PAGE_WEATHER)return true;
  if(requested==PAGE_APPS || requested==PAGE_CARD)return false;
  return active==requested;
@@ -133,6 +138,23 @@ bool passport_screensaver_poll(passport_screensaver_t *state,int64_t now_us,bool
  if(now_us<state->last_activity_us){state->last_activity_us=now_us;return false;}
  if(now_us-state->last_activity_us<PASSPORT_SCREENSAVER_IDLE_US)return false;
  state->asleep=true;return true;
+}
+
+passport_traffic_phase_t passport_traffic_phase(int64_t elapsed_us,int64_t total_us){
+ if(elapsed_us<0)elapsed_us=0;
+ if(total_us<=0 || elapsed_us>=total_us)return PASSPORT_TRAFFIC_PHASE_DONE;
+ return elapsed_us<PASSPORT_TRAFFIC_RED_US?PASSPORT_TRAFFIC_PHASE_RED:PASSPORT_TRAFFIC_PHASE_GREEN;
+}
+unsigned passport_traffic_countdown(int64_t elapsed_us,int64_t total_us){
+ if(passport_traffic_phase(elapsed_us,total_us)!=PASSPORT_TRAFFIC_PHASE_GREEN)return 0;
+ int64_t remaining=total_us-elapsed_us;
+ return (unsigned)((remaining+999999)/1000000);
+}
+bool passport_traffic_green_lit(int64_t elapsed_us,int64_t total_us){
+ if(passport_traffic_phase(elapsed_us,total_us)!=PASSPORT_TRAFFIC_PHASE_GREEN)return false;
+ if(total_us-elapsed_us>PASSPORT_TRAFFIC_FLASH_US)return true;
+ /* Flashing green man: 600 ms period, lit for the first 360 ms. */
+ return elapsed_us%600000<360000;
 }
 
 void passport_clock_format(char *out,size_t capacity,unsigned weekday,unsigned hour,unsigned minute,bool synced){

@@ -40,6 +40,10 @@
 - 嵌入音频前评估 Flash 与内部 RAM 成本；长录音应流式或分块。
 - 无再分发许可不提交媒体文件。
 
+| 文件 | 格式 | 用途与来源 |
+| --- | --- | --- |
+| [`music/traffic-crossing.pcm`](music/traffic-crossing.pcm) | 无符号 8 位 PCM，16 kHz 单声道，35.9 秒，574,741 字节 | 交通灯页使用的行人过街按钮声音，通过 `EMBED_FILES` 嵌入，播放时上转换为 16 位（8 位存储使 Flash 占用为 16 kHz BSP 格式的一半）。录音为新加坡杨厝港路过街按钮盒的实地录音，来源为 YouTube 视频 "Singapore Pedestrian Crossing Button Sound at Yio Chu Kang Road"（Traffic light Collection99），使用 `ffmpeg -ac 1 -ar 16000 -f u8` 转换。经项目所有者明确要求收录，用于其个人设备项目。 |
+
 ## 随身护照字体
 
 设备英文界面统一使用 LVGL Montserrat 16 像素字体。局部字体描述符以

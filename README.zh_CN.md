@@ -22,7 +22,7 @@ https://github.com/user-attachments/assets/6b7cf0e2-719f-4cdf-8765-84fe11898c2d
 
 https://github.com/user-attachments/assets/257cc789-d551-45c1-ab0a-f0e6ade3930a
 
-## ✨ 小设备，九个应用
+## ✨ 小设备，十个应用
 
 | 应用 | 内容 |
 | --- | --- |
@@ -35,6 +35,7 @@ https://github.com/user-attachments/assets/257cc789-d551-45c1-ab0a-f0e6ade3930a
 | 📻 广播 | 六个新加坡台、四个马来西亚台 |
 | 🌦️ 天气 | 新加坡、新山、吉隆坡、槟城 |
 | ⚙️ 设置 | 中英文、名片二维码、资料、照片、Wi-Fi、城市、PSI 区域与站点 |
+| 🚦 交通灯 | 新加坡行人过街信号灯，播放真实的按钮盒声音：红灯站立行人，随后绿灯行走行人加倒计时；结束显示你的微信 / LinkedIn / WhatsApp 二维码 |
 
 首页标题显示本地星期与 24 小时时间，例如 **MON 12:55**，每分钟更新。
 **--- --:--** 表示时间尚未同步。首页也显示 **NEA 24 小时 PSI**。设备没有 GPS，

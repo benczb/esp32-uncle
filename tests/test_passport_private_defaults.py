@@ -73,6 +73,36 @@ class PrivateDefaultsTest(unittest.TestCase):
             module.generate(source,header)
             self.assertNotEqual(first.split('REVISION')[1],header.read_text().split('REVISION')[1])
 
+    def test_traffic_qr_links_are_optional_validated_and_escaped(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory);source=path/'private.json';header=path/'generated.h'
+            # No local file at all: every traffic link defaults to empty.
+            module.generate(path/'absent.json',header)
+            text=header.read_text()
+            for key in ('WECHAT','LINKEDIN','WHATSAPP'):
+                self.assertIn(f'PASSPORT_PRIVATE_TRAFFIC_QR_{key} ""',text)
+            # A data-only local file (no Wi-Fi profiles) is valid.
+            data={'traffic_qr':{'whatsapp':'https://wa.me/6512345678',
+                                'linkedin':'https://www.linkedin.com/in/example',
+                                'wechat':''}}
+            source.write_text(json.dumps(data));module.generate(source,header)
+            text=header.read_text()
+            self.assertIn('PASSPORT_PRIVATE_WIFI_COUNT 0',text)
+            self.assertIn('PASSPORT_PRIVATE_TRAFFIC_QR_WHATSAPP',text)
+            self.assertNotIn('wa.me/6512345678',text)  # octal-escaped literal
+            program=path/'traffic.c'
+            program.write_text('#include "generated.h"\n#include <string.h>\n#include <assert.h>\nint main(void){assert(!strcmp(PASSPORT_PRIVATE_TRAFFIC_QR_WHATSAPP,"https://wa.me/6512345678"));assert(!strcmp(PASSPORT_PRIVATE_TRAFFIC_QR_LINKEDIN,"https://www.linkedin.com/in/example"));assert(!strcmp(PASSPORT_PRIVATE_TRAFFIC_QR_WECHAT,""));}\n')
+            subprocess.run(['cc','-std=c11',str(program),'-o',str(path/'traffic')],check=True,capture_output=True)
+            subprocess.run([str(path/'traffic')],check=True,capture_output=True)
+            for bad in ({'traffic_qr':{'whatsapp':'ftp://example.test'}},
+                        {'traffic_qr':{'linkedin':'https://example.test/a b'}},
+                        {'traffic_qr':{'wechat':'https://example.test/'+'x'*250}},
+                        {'traffic_qr':['not-a-dict']},
+                        {'traffic_qr':{'whatsapp':7}}):
+                source.write_text(json.dumps(bad))
+                with self.assertRaisesRegex(ValueError,'^Invalid private traffic QR links$'):
+                    module.generate(source,header)
+
     def test_bad_profiles_fail_without_echoing_credentials(self):
         bad=[[],[{'id':'other','ssid':'valid','password':'testpass'}],
              [{'id':'home','ssid':'x'*33,'password':'privatepass'}],

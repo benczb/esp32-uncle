@@ -23,6 +23,7 @@ over the reference app's closed whole-device firmware.
 | Hermes | Phone settings page submits text; Up/Down reads reply pages; hold Down to record and release to send through the configured computer bridge |
 | Muse | Official Muse AI / Muse Passport integration is in progress; no working Bluetooth chat is claimed |
 | Radio | Up/Down: station; OK: play/pause; hold Up/Down: volume with live percentage; hold OK stops and exits |
+| Traffic light | Singapore pedestrian crossing cycle with sound; OK: light / contact QRs; Up/Down: switch QR; hold OK: directory |
 | Weather | Singapore/Malaysia city weather; OK: refresh |
 | Settings | Shows IP and random per-boot setup code; Up/Down selects a supplied Wi-Fi preset, OK saves/connects; hold Down opens Wi-Fi setup; hold Up changes language |
 
@@ -89,6 +90,43 @@ reconnect, re-association, and TLS session on every wake, which costs more
 power than it saves at this timeout; the saving comes from not fetching.
 Radio playback, a voice interaction, and an open phone setup page count as
 busy and keep the display awake.
+
+## Traffic light
+
+The directory's tenth entry recreates a Singapore pedestrian crossing
+signal, in the dot-matrix LED style of the real signals. Opening it starts
+one full cycle, timed by the bundled crossing recording:
+
+1. For about the first three seconds the **red standing man** is lit while
+   the recording plays the soft locator sound of a crossing push-button
+   unit.
+2. The red man goes off and the **green walking man** lights, with a red
+   LED countdown in the top lens. For the last five seconds the green man
+   flashes, as on a real crossing.
+3. When the recording ends (about 36 seconds), the page shows the contact
+   QR view.
+
+Press **OK** at any time to switch between the light and the contact QRs;
+returning to the light restarts the cycle. In the QR view, **Up/Down**
+switch between the three codes — WeChat, LinkedIn, and WhatsApp — so the
+other person scans whichever they use. Hold **OK** to return to the
+directory.
+
+The sound is a field recording of a Singapore crossing push-button unit
+(Yio Chu Kang Road; source video by Traffic light Collection99 on
+YouTube), converted to unsigned 8-bit PCM at 16 kHz
+(`assets/music/traffic-crossing.pcm`, about 575 KB) and embedded in the
+firmware. Playback is fully local — no Wi-Fi, bridge, or streaming is
+involved — and follows the device volume. While the cycle plays it counts
+as busy for the screensaver; when it ends, the normal 10-second idle
+screensaver resumes.
+
+The three QR links are personal data. They are **never committed to this
+repository**: set them on the phone settings page (Traffic light contact
+QRs) or supply them at build time through the ignored
+`.local/passport-defaults.json` on your own computer (`traffic_qr` with
+`wechat`, `linkedin`, `whatsapp`). Either way they end up in device NVS
+only. A code whose link is empty shows a reminder to set it instead.
 
 ## Computer bridge and assistant scope
 

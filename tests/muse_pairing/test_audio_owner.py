@@ -12,7 +12,7 @@ HARNESS = r'''
 #include <stdatomic.h>
 #define pdPASS 1
 #define ESP_LOGW(...) ((void)0)
-static atomic_bool audio_desired,audio_worker_running;
+static atomic_bool audio_desired,audio_worker_running,traffic_desired;
 static bool voice_needed,fail,speech_busy;
 static bool passport_muse_speech_busy(void){return speech_busy;}
 static unsigned calls;
@@ -37,6 +37,8 @@ int main(void){
   audio_worker_start_if_needed();assert(calls==previous+1);
   voice_needed=false;audio_worker_running=false;
  }
+ /* The traffic-light recording is a third legitimate audio demand. */
+ traffic_desired=true;{unsigned previous=calls;audio_worker_start_if_needed();assert(calls==previous+1&&audio_worker_running);}
  return 0;
 }
 '''

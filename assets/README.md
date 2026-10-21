@@ -42,6 +42,10 @@ Store reusable music and sound-effect sources in `music/`.
 - Check Flash and internal-RAM cost before embedding audio; stream or chunk long recordings.
 - Do not commit media without redistribution permission.
 
+| File | Format | Use and source |
+| --- | --- | --- |
+| [`music/traffic-crossing.pcm`](music/traffic-crossing.pcm) | Unsigned 8-bit PCM, 16 kHz mono, 35.9 s, 574,741 bytes | Pedestrian crossing push-button sound for the Traffic Light page, embedded with `EMBED_FILES` and upconverted to 16-bit at playback (8-bit storage halves the Flash cost of the 16 kHz BSP format). Field recording of a Singapore crossing at Yio Chu Kang Road from the YouTube video "Singapore Pedestrian Crossing Button Sound at Yio Chu Kang Road" by Traffic light Collection99; converted with `ffmpeg -ac 1 -ar 16000 -f u8`. Included at the project owner's direction for this personal device project. |
+
 ## Pocket Passport font
 
 English device screens use LVGL Montserrat at 16 pixels throughout. A local
