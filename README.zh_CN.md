@@ -2,9 +2,6 @@
 
 <h1 align="center">🟢 ESP32 Uncle</h1>
 
-<p align="center">
-  <img src="assets/images/pocket-uncle-cover.png" alt="口袋阿叔封面示意图" width="540">
-</p>
 
 <p align="center"><b>你的口袋，你的配置。</b><br>为 FoloToy AI Passport 打造的私人随身看板。</p>
 
@@ -19,6 +16,10 @@
   <img alt="ESP IDF 5.5.3" src="https://img.shields.io/badge/ESP--IDF-5.5.3-336EAD?style=flat-square">
   <img alt="中文 LVGL 界面" src="https://img.shields.io/badge/UI-LVGL_%2B_Chinese-7954B3?style=flat-square">
   <a href="LICENSE"><img alt="MIT 许可" src="https://img.shields.io/badge/license-MIT-35A77B?style=flat-square"></a>
+</p>
+
+<p align="center">
+  <img src="assets/images/pocket-uncle-cover.png" alt="口袋阿叔封面示意图" width="540">
 </p>
 
 ## 🎬 发布短片

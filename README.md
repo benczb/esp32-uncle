@@ -2,9 +2,6 @@
 
 <h1 align="center">🟢 ESP32 Uncle</h1>
 
-<p align="center">
-  <img src="assets/images/pocket-uncle-cover.png" alt="Pocket Uncle cover illustration" width="540">
-</p>
 
 <p align="center"><b>Your pocket. Your setup.</b><br>A personal dashboard for the FoloToy AI Passport.</p>
 
@@ -19,6 +16,10 @@
   <img alt="ESP IDF 5.5.3" src="https://img.shields.io/badge/ESP--IDF-5.5.3-336EAD?style=flat-square">
   <img alt="Custom LVGL UI" src="https://img.shields.io/badge/UI-LVGL_%2B_Chinese-7954B3?style=flat-square">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-35A77B?style=flat-square"></a>
+</p>
+
+<p align="center">
+  <img src="assets/images/pocket-uncle-cover.png" alt="Pocket Uncle cover illustration" width="540">
 </p>
 
 ## 🎬 Launch films
@@ -88,7 +89,6 @@ cp config/wifi-profiles.example.json .local/passport-defaults.json
 
 Leave `.local/` absent if you prefer manual Wi-Fi setup on the phone.
 Then build and verify:
-
 
 ```bash
 ./tools/validate.sh
