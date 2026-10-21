@@ -1,6 +1,11 @@
 [English](README.md) · **简体中文**
 
 <h1 align="center">🟢 ESP32 Uncle</h1>
+
+<p align="center">
+  <img src="assets/images/pocket-uncle-cover.png" alt="口袋阿叔封面示意图" width="540">
+</p>
+
 <p align="center"><b>你的口袋，你的配置。</b><br>为 FoloToy AI Passport 打造的私人随身看板。</p>
 
 <p align="center">
