@@ -220,10 +220,19 @@ class Handler(BaseHTTPRequestHandler):
         if public_path.path == '/spotify/callback':
             query = urllib.parse.parse_qs(public_path.query)
             try:
-                features()[1].callback(query.get('state', [''])[0], query.get('code', [''])[0])
-                return self.send_json({'status': 'Spotify connected. Return to /tools or open Spotify on Passport.'})
+                language = features()[1].callback(query.get('state', [''])[0], query.get('code', [''])[0])
+                self.send_response(303)
+                self.send_header('Location', '/tools?lang=' + language + '&spotify=connected')
+                self.send_header('Cache-Control', 'no-store')
+                self.send_header('Content-Length', '0')
+                self.end_headers(); return
             except Exception:
-                return self.send_json({'error': 'Spotify sign-in failed. Start again at /tools.'}, 400)
+                self.send_response(303)
+                language = 'zh-CN' if query.get('state', [''])[0].startswith('zh.') else 'en'
+                self.send_header('Location', '/tools?lang=' + language + '&spotify=failed')
+                self.send_header('Cache-Control', 'no-store')
+                self.send_header('Content-Length', '0')
+                self.end_headers(); return
         if not self.authorized():
             return self.send_json({'error': 'Unauthorized'}, 401)
         url = urllib.parse.urlsplit(self.path)
@@ -322,7 +331,7 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_json(library.add(query.get('name', [''])[0], data), 201)
                 body = json.loads(data)
                 if not isinstance(body, dict): raise ValueError('Invalid request')
-                if url.path == '/v1/spotify/login': return self.send_json(spotify.login())
+                if url.path == '/v1/spotify/login': return self.send_json(spotify.login(body.get("language", "en")))
                 if url.path == '/v1/spotify/control': return self.send_json(spotify.control(body.get('action')))
                 if body.get('action') == 'select': return self.send_json(library.select(body.get('id')))
                 return self.send_json(library.control(body.get('action')))

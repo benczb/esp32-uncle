@@ -11,11 +11,41 @@ class SettingsTest(unittest.TestCase):
     def test_ui_labels_have_font_inventory(self):
         inventory = set((ROOT/'assets/fonts/passport-symbols.txt').read_text())
         missing = set()
-        for file in ['main/passport_ui.c','main/passport_network.c','main/passport_usage.c']:
+        for file in ['main/passport_ui.c','main/passport_network.c','main/passport_usage.c','main/passport_i18n.c']:
             source = (ROOT/file).read_text()
             for literal in re.findall(r'"(?:[^"\\]|\\.)*"', source):
                 missing.update(c for c in literal if ord(c) > 127 and c not in inventory)
         self.assertFalse(missing, 'Missing UI glyphs: ' + repr(missing))
+
+    def test_status_translation_switches_without_mutating_content(self):
+        harness = r'''#include "passport_i18n.h"
+#include "passport_features.h"
+#include <assert.h>
+#include <string.h>
+int main(void){
+ passport_language_set(0);
+ assert(!strcmp(passport_message("Komoot connected"),"Komoot 已连接"));
+ assert(!strcmp(passport_message(passport_turn_name(8)),"右转"));
+ assert(!strcmp(passport_message("paused"),"已暂停"));
+ assert(!strcmp(passport_message("Spotify permission or Premium required"),"需要 Spotify 授权或高级会员"));
+ assert(!strcmp(passport_message("River Valley Road"),"River Valley Road"));
+ passport_language_set(1);
+ assert(!strcmp(passport_message("Komoot connected"),"Komoot connected"));
+ assert(!strcmp(passport_message(passport_turn_name(8)),"Turn right"));
+ for(unsigned turn=0;turn<=30;turn++){
+  const char *english=passport_turn_name(turn);
+  passport_language_set(0);assert(strcmp(passport_message(english),english));
+  passport_language_set(1);assert(!strcmp(passport_message(english),english));
+ }
+ return 0;
+}'''
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)/'languages.c'; binary = Path(directory)/'languages'
+            source.write_text(harness)
+            subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-Imain',str(source),
+                            'main/passport_i18n.c','main/passport_features.c','main/passport_model.c',
+                            '-o',str(binary)], cwd=ROOT, check=True)
+            subprocess.run([str(binary)],check=True)
 
     def test_relay_weather_refresh_without_network_worker(self):
         source=(ROOT/'main/passport_network.c').read_text()

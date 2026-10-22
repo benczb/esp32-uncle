@@ -231,3 +231,11 @@ Files/Downloads 文件选择；iPhone 提示涵盖蓝牙隐私权限和 Files �
 
 权限参考：[Android](https://support.google.com/android/answer/9431959)
 及 [iPhone](https://support.apple.com/en-us/102267)。
+
+### 界面语言
+
+手机设置中的语言会传递到 `/tools?lang=en` 或 `/tools?lang=zh-CN`。
+直接访问时默认跟随浏览器语言；通过语言选择器切换后，应用标签、权限说明、按钮、状态和错误提示
+立即跟随语言更新，包括当前阅读和播放状态。Spotify 登录后也会返回所选语言。访问令牌不会加入网址。
+图书正文、文件名、人名、街道名称、音乐信息及外部服务通知保留原文；产品名称和技术标识保留官方写法。
+浏览器或系统对话框以及外部 Spotify/Komoot 页面跟随各自的语言设置。

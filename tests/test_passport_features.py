@@ -58,8 +58,11 @@ class Features(unittest.TestCase):
             self.assertEqual(query['code_challenge_method'], ['S256']); self.assertNotIn('code_verifier', query)
             with self.assertRaises(ValueError): spotify.callback('wrong', 'code')
             with patch.object(spotify, 'exchange') as exchange:
-                spotify.callback(query['state'][0], 'code'); exchange.assert_called_once()
+                self.assertEqual(spotify.callback(query['state'][0], 'code'), 'en'); exchange.assert_called_once()
             with self.assertRaises(ValueError): spotify.callback(query['state'][0], 'code')
+            spotify.login('zh-CN')
+            with patch.object(spotify, 'exchange'):
+                self.assertEqual(spotify.callback(spotify.pending[0], 'code'), 'zh-CN')
             spotify.login(); spotify.pending = (*spotify.pending[:2], 0)
             with self.assertRaises(ValueError): spotify.callback(spotify.pending[0], 'code')
 
@@ -148,7 +151,11 @@ class Features(unittest.TestCase):
                     self.assertEqual(failure.exception.code,400)
                     with self.assertRaises(urllib.error.HTTPError) as failure: request('/v1/reader/control',b'{"action":"invalid"}')
                     self.assertEqual(failure.exception.code,400)
-                    with self.assertRaises(urllib.error.HTTPError): request('/spotify/callback?state=wrong&code=code',auth=False)
+                    with urllib.request.urlopen(base+'/spotify/callback?state=zh.wrong&code=code') as response:
+                        self.assertIn('lang=zh-CN&spotify=failed', response.url)
+                    with patch.object(spotify, 'callback', return_value='zh-CN'):
+                        with urllib.request.urlopen(base+'/spotify/callback?state=test&code=code') as response:
+                            self.assertIn('lang=zh-CN&spotify=connected', response.url)
             finally: http.shutdown();http.server_close();thread.join()
 
 

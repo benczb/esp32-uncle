@@ -145,3 +145,34 @@ No firmware changes or flashing were needed. Restart the companion and reload
 Local gate archive: `build/firmware/bba66c84e6a360e99b768050091e04195695d6822eba230bb4fb9d645ddf4f25/`.
 Full SHA-256: `bba66c84e6a360e99b768050091e04195695d6822eba230bb4fb9d645ddf4f25`.
 ELF SHA-256: `109a04258eaac15ab5f53526f7d0b23c5a448eb2c322aad3968b2d8421b3d0f1`.
+
+## Consistent Chinese and English interfaces
+
+Device controls, Komoot status/maneuvers/overlays, Spotify status, ebook guidance,
+city names and language choices now follow the selected language. Generated
+weather, air-quality, bus and train status labels are invalidated when language
+changes so cached labels do not retain the previous language. Phone settings and
+companion setup include translated static copy, dynamic feedback, file controls,
+errors, phone-specific instructions and Spotify sign-in return messages. The
+settings page passes language to the companion without putting tokens in URLs.
+
+User and provider content stays original: book text/titles, personal data, streets,
+music metadata and service notices. Product names and technical identifiers keep
+their official spelling. External app and OS dialogs use their own language.
+
+Build: PASS — full default gate and Muse-enabled owner build, merged-image/layout
+and archive verification. Host tests: PASS — feature/OAuth tests, 13 settings
+tests, native bilingual/theme renders, complete glyph coverage and Chromium/WebKit
+checks for switching language after errors and during reading, original-content
+preservation and language handoff. Device tests: NOT RUN for this build.
+Physical display, live phone navigation/account behavior and language persistence
+remain unverified. No device was flashed.
+
+Prepared owner image SHA-256:
+`deccf302b724e9172cae0d2274bbed1ff66640664e7f2b8a4ae1d25e16372e6d`.
+Matching ELF SHA-256:
+`0d1942166e1bfae5cd7c3d427781fe289aa0a09ae3ef815b054e07f9c706f162`.
+Verified local bundle: `build/firmware/deccf302b724e9172cae0d2274bbed1ff66640664e7f2b8a4ae1d25e16372e6d/`.
+The partition table matches the previous owner build. Firmware and debug files
+remain private and are excluded from GitHub. This device UI update requires
+flashing the prepared firmware; companion changes require a restart.

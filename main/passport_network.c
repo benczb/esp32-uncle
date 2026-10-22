@@ -76,6 +76,7 @@ static atomic_uint wifi_failure_reason;
 static atomic_uint weather_generation;
 static bool copy_weather(cJSON *j);
 static void localize_network_status(void);
+static void localize_cached_status(void);
 static void lock(void);
 static void unlock(void);
 static QueueHandle_t work_queue;
@@ -171,7 +172,7 @@ unsigned passport_wifi_profile_count(void){return PASSPORT_PRIVATE_WIFI_COUNT;}
 unsigned passport_wifi_profile_current(void){return atomic_load(&wifi_current);}
 const char *passport_wifi_profile_label(unsigned index){
  if(index>=passport_wifi_profile_count())return T("自定义","Custom");
- return !strcmp(wifi_profiles[index].id,"home")?T("在家 Home","Home"):T("手机热点","Phone Hotspot");
+ return !strcmp(wifi_profiles[index].id,"home")?T("在家","Home"):T("手机热点","Phone Hotspot");
 }
 static unsigned wifi_profile_for_ssid(const char *ssid){
  for(unsigned i=0;i<passport_wifi_profile_count();i++)if(!strcmp(ssid,wifi_profiles[i].ssid))return i;
@@ -400,7 +401,7 @@ static esp_err_t config_post(httpd_req_t *r) {
  if(valid && chosen_profile<passport_wifi_profile_count() && cJSON_IsString(entered_password) && entered_password->valuestring[0]){
   valid=store && nvs_set_str(store,wifi_password_key(chosen_profile),next.password)==ESP_OK;
  }
- if(valid && store && nvs_set_str(store,"lta_api_key",next_lta)==ESP_OK && nvs_set_str(store,"qr_url",next_qr)==ESP_OK && nvs_set_u8(store,"language",next_language)==ESP_OK && nvs_set_blob(store,"config",&next,sizeof(next))==ESP_OK && nvs_set_blob(store,"haze",&next_haze,sizeof(next_haze))==ESP_OK && nvs_set_blob(store,"bus",&next_bus,sizeof(next_bus))==ESP_OK && nvs_commit(store)==ESP_OK){if(chosen_profile<passport_wifi_profile_count() && cJSON_IsString(entered_password) && entered_password->valuestring[0])snprintf(wifi_password_override[chosen_profile],sizeof(wifi_password_override[chosen_profile]),"%s",next.password);passport_language_set(next_language);localize_network_status();snprintf(passport_qr_url,sizeof(passport_qr_url),"%s",next_qr);passport_weather[0]=passport_athena[0]=0;passport_config=next;passport_photo_invalidate();snprintf(lta_account_key,sizeof(lta_account_key),"%s",next_lta);atomic_store(&wifi_current,wifi_profile_for_ssid(next.ssid));haze_location=next_haze;bus_config=next_bus;passport_bus_stop_count=next_bus.count;passport_bus_rows=0;passport_bus_pages=1;atomic_fetch_add(&bus_generation,1);passport_psi_value=-1;strcpy(passport_haze_status,T("正在更新","Updating"));passport_dirty=true;}
+ if(valid && store && nvs_set_str(store,"lta_api_key",next_lta)==ESP_OK && nvs_set_str(store,"qr_url",next_qr)==ESP_OK && nvs_set_u8(store,"language",next_language)==ESP_OK && nvs_set_blob(store,"config",&next,sizeof(next))==ESP_OK && nvs_set_blob(store,"haze",&next_haze,sizeof(next_haze))==ESP_OK && nvs_set_blob(store,"bus",&next_bus,sizeof(next_bus))==ESP_OK && nvs_commit(store)==ESP_OK){if(chosen_profile<passport_wifi_profile_count() && cJSON_IsString(entered_password) && entered_password->valuestring[0])snprintf(wifi_password_override[chosen_profile],sizeof(wifi_password_override[chosen_profile]),"%s",next.password);passport_language_set(next_language);localize_cached_status();snprintf(passport_qr_url,sizeof(passport_qr_url),"%s",next_qr);passport_weather[0]=passport_athena[0]=0;passport_config=next;passport_photo_invalidate();snprintf(lta_account_key,sizeof(lta_account_key),"%s",next_lta);atomic_store(&wifi_current,wifi_profile_for_ssid(next.ssid));haze_location=next_haze;bus_config=next_bus;passport_bus_stop_count=next_bus.count;passport_bus_rows=0;passport_bus_pages=1;atomic_fetch_add(&bus_generation,1);passport_psi_value=-1;strcpy(passport_haze_status,T("正在更新","Updating"));passport_dirty=true;}
  else valid=false;
  unlock();cJSON_Delete(j);
  if(!valid)return fail(r,"400 Bad Request","{\"error\":\"资料无效或保存失败。地址需为局域网 http:// 地址\"}");
@@ -556,6 +557,18 @@ static void localize_network_status(void){
  else if(atomic_load(&wifi_gave_up))snprintf(passport_network_status,sizeof(passport_network_status),T("Wi-Fi 失败 (%u)\n确定重试","Wi-Fi failed (%u)\nOK: retry"),atomic_load(&wifi_failure_reason));
  else if(atomic_load(&wifi_deadline))snprintf(passport_network_status,sizeof(passport_network_status),T("正在连接 %s","Connecting to %s"),passport_wifi_profile_label(passport_wifi_profile_current()));
  else snprintf(passport_network_status,sizeof(passport_network_status),T("设置码 %s","Setup code %s"),setup_code);
+}
+/* Called with the application mutex held (or before workers start). Generated
+ * display strings must not retain the previous language while data refreshes. */
+static void localize_cached_status(void){
+ localize_network_status();passport_weather[0]=passport_athena[0]=0;
+ passport_psi_value=-1;
+ snprintf(passport_haze_status,sizeof(passport_haze_status),"%s",T("正在更新","Updating"));
+ snprintf(passport_haze_meta,sizeof(passport_haze_meta),"%s",T("NEA · 空气质量","NEA | air quality"));
+ passport_bus_rows=0;
+ snprintf(passport_bus_title,sizeof(passport_bus_title),"%s",T("巴士到站","Bus arrivals"));
+ snprintf(passport_bus_meta,sizeof(passport_bus_meta),"%s",T("确定刷新 · 上下翻页","OK: Refresh | Up/Down: Page"));
+ passport_train_status[0]=0;passport_train_refresh_request();
 }
 static void wifi_timeout_check(void){
  uint32_t deadline=atomic_load(&wifi_deadline);
@@ -998,7 +1011,7 @@ static void network_worker(void *unused) {
    else {snprintf(passport_network_status,sizeof(passport_network_status),"%s",T("外观保存失败","Appearance save failed"));passport_dirty=true;}
    unlock();continue;
   }
-  if(work.kind==4){lock();if(store && nvs_set_u8(store,"language",work.wifi_profile)==ESP_OK && nvs_commit(store)==ESP_OK){passport_language_set(work.wifi_profile);localize_network_status();passport_weather[0]=passport_athena[0]=0;passport_dirty=true;}unlock();continue;}
+  if(work.kind==4){lock();if(store && nvs_set_u8(store,"language",work.wifi_profile)==ESP_OK && nvs_commit(store)==ESP_OK){passport_language_set(work.wifi_profile);localize_cached_status();passport_dirty=true;}unlock();continue;}
   if(work.kind==3){connect_wifi_profile(work.wifi_profile);continue;}
   if(work.kind==2){poll_bus(&work);continue;}
   if(work.kind==0 && phone_relay_active() && (work.page==PAGE_ATHENA || work.page==PAGE_RADIO || work.page==PAGE_HERMES))continue;
@@ -1177,7 +1190,7 @@ void passport_network_start(void) {
  ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
  wifi_config_t sta={0};strcpy((char *)sta.sta.ssid,passport_config.ssid);strcpy((char *)sta.sta.password,passport_config.password);
  ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA,&sta));ESP_ERROR_CHECK(esp_wifi_start());
- snprintf(passport_network_status,sizeof(passport_network_status),T("设置码 %s","Setup code %s"),setup_code);
+ localize_cached_status();
  if(!passport_config.ssid[0])passport_open_setup();
  work_queue=xQueueCreate(2,sizeof(work_t));
  control_queue=xQueueCreate(4,sizeof(control_t));

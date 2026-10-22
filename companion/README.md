@@ -263,3 +263,15 @@ on each platform; browser emulation does not prove BLE compatibility.
 
 Permission references: [Android](https://support.google.com/android/answer/9431959)
 and [iPhone](https://support.apple.com/en-us/102267).
+
+### Interface language
+
+The phone settings language is carried into `/tools?lang=en` or
+`/tools?lang=zh-CN`. Direct visits use the browser language initially; the language
+selector changes every application label, permission instruction, button, status
+and error message immediately, including existing reading and playback state.
+Spotify sign-in returns to the selected language. No access token is added to URLs.
+Book text, filenames, personal names, street names, music metadata and upstream
+service notices retain their original language; product names and technical
+identifiers retain their official spelling. Browser/OS dialogs and external
+Spotify/Komoot pages follow those apps' own language settings.

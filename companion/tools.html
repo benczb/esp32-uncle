@@ -10,6 +10,7 @@ body{max-width:42rem;margin:auto;padding:1.5rem 1.25rem}h1{font-size:1.75rem;lin
 <main>
 <h1>Set up your Passport</h1>
 <p>Start a route, add a book, or connect your music. Use this same page on Android or iPhone.</p>
+<label for="language">Language</label><select id="language"><option value="en">English</option><option value="zh-CN">Chinese</option></select>
 <label for="phone">Your phone</label><select id="phone"><option value="android">Android</option><option value="iphone">iPhone / iPad</option></select>
 <p id="phone_help" aria-live="polite"></p>
 <section aria-labelledby="navigation"><h2 id="navigation">Turn-by-turn navigation</h2>
@@ -24,7 +25,7 @@ body{max-width:42rem;margin:auto;padding:1.5rem 1.25rem}h1{font-size:1.75rem;lin
 </section>
 <section aria-labelledby="shelf"><h2 id="shelf">Your bookshelf</h2>
 <p>Choose a UTF-8 TXT or DRM-free EPUB from your phone, up to 4 MB.</p><p id="file_help">Choose your book from Files or Downloads on Android.</p>
-<fieldset id="book_controls" disabled><label for="file">Book file</label><input type="file" id="file" accept=".txt,.epub"><button id="upload" class="primary">Add book</button><button id="books">Refresh bookshelf</button><ul id="list"><li>Connect the companion above to see your books.</li></ul></fieldset>
+<fieldset id="book_controls" disabled><label for="file">Book file</label><input type="file" id="file" accept=".txt,.epub" hidden><button id="choose_file" type="button">Choose file</button><span id="filename">No file selected</span><button id="upload" class="primary">Add book</button><button id="books">Refresh bookshelf</button><ul id="list"><li>Connect the companion above to see your books.</li></ul></fieldset>
 <p id="reading" role="status" aria-live="polite"></p><details id="preview_box" hidden><summary>Preview current page</summary><div id="preview"></div></details>
 <small>Open Books on Passport. Up/Down turns pages; OK returns to the shelf. Books and saved positions stay on the computer, which must remain reachable while reading. Phone relay does not currently forward book pages.</small>
 </section>
@@ -37,16 +38,143 @@ body{max-width:42rem;margin:auto;padding:1.5rem 1.25rem}h1{font-size:1.75rem;lin
 </main>
 <script>
 const byId=id=>document.getElementById(id);
+const translations={
+ "Language": "语言",
+ "English": "英文",
+ "Chinese": "中文",
+ "Choose file": "选择文件",
+ "No file selected": "尚未选择文件",
+ "Pocket Passport · Phone setup": "随身护照 · 手机设置",
+ "Set up your Passport": "设置随身护照",
+ "Start a route, add a book, or connect your music. Use this same page on Android or iPhone.": "开始导航、添加图书或连接音乐。安卓和苹果手机均使用此页面。",
+ "Your phone": "手机类型",
+ "Android": "安卓",
+ "iPhone / iPad": "苹果手机 / 平板",
+ "Turn-by-turn navigation": "逐向导航",
+ "On Android, enable Bluetooth. In Settings → Apps → Komoot → Permissions, allow Location and Nearby devices when requested. Menu names vary by phone.": "在安卓手机开启蓝牙。在设置 → 应用 → Komoot → 权限中，按提示允许位置和附近设备权限。不同手机的菜单名称可能不同。",
+ "In Komoot, enable": "在 Komoot 中启用",
+ "Bluetooth Connect": "蓝牙连接",
+ "if available, then start a route. Keep Komoot open for the first connection.": "（如有此选项），然后开始导航。首次连接时保持 Komoot 在前台。",
+ "On Passport, open": "在随身护照打开",
+ "Navigation": "导航",
+ "and press": "并按",
+ "OK": "确定",
+ ". Wait for a street name and distance.": "。等待显示街道名称和距离。",
+ "No computer or access token is needed for navigation. Komoot connects directly to Passport; this webpage does not pair Bluetooth devices.": "导航不需要电脑或访问令牌。Komoot 直接连接随身护照，此网页不负责蓝牙配对。",
+ "Directions are not appearing?": "没有显示导航？",
+ "Keep the phone nearby and check that the route is running. Stop and restart the connection with OK. Current phone compatibility still needs testing; the reference implementation was tested on iOS only. If your Komoot app has no Bluetooth Connect option, this connection may not be supported.": "保持手机在附近并确认路线正在导航。按确定停止后重新连接。当前手机兼容性仍需实测；参考实现仅在苹果系统测试过。如果 Komoot 中没有蓝牙连接选项，此连接方式可能不受支持。",
+ "Komoot connection reference": "Komoot 连接参考",
+ "Connect books & music": "连接图书与音乐",
+ "Keep the companion computer running. Your phone and Passport must both be able to reach it. The simplest setup is the same home Wi-Fi.": "保持电脑桥接服务运行。手机和随身护照都必须能连接电脑。最简单的方法是连接同一个家庭无线网络。",
+ "Companion access token": "电脑服务访问令牌",
+ "Use the service access token entered in Passport settings, not the six-digit device code. It stays in this tab.": "使用随身护照设置中的服务访问令牌，不是六位设备设置码。令牌仅在当前标签页使用。",
+ "Connect companion": "连接电脑服务",
+ "Enter your token to load your bookshelf.": "输入令牌以加载书架。",
+ "Your bookshelf": "我的书架",
+ "Choose a UTF-8 TXT or DRM-free EPUB from your phone, up to 4 MB.": "从手机选择 UTF-8 编码的 TXT 或无版权加密的 EPUB，最大 4 MB。",
+ "Choose your book from Files or Downloads on Android.": "在安卓手机的文件或下载目录中选择图书。",
+ "Book file": "图书文件",
+ "Add book": "添加图书",
+ "Refresh bookshelf": "刷新书架",
+ "Connect the companion above to see your books.": "先连接上方电脑服务以查看图书。",
+ "Preview current page": "预览当前页",
+ "Open Books on Passport. Up/Down turns pages; OK returns to the shelf. Books and saved positions stay on the computer, which must remain reachable while reading. Phone relay does not currently forward book pages.": "在随身护照打开阅读。上下键翻页，确定返回书架。图书和阅读位置保存在电脑，阅读时必须保持连接。手机中继目前不转发图书页面。",
+ "Music plays on your phone or Spotify player. Start a song in Spotify, then use Passport as the remote.": "音乐在手机或 Spotify 播放器上播放。先在 Spotify 播放歌曲，再用随身护照遥控。",
+ "Connect the companion above to check Spotify setup.": "先连接上方电脑服务以检查 Spotify 设置。",
+ "Connect Spotify": "连接 Spotify",
+ "Check playback": "检查播放状态",
+ "Not checked yet.": "尚未检查。",
+ "Previous": "上一首",
+ "Play / pause": "播放 / 暂停",
+ "Next": "下一首",
+ "First-time Spotify setup": "首次设置 Spotify",
+ "Spotify Premium and a configured developer app are required. Set SPOTIFY_CLIENT_ID on the companion. With the default callback, sign in once using a browser on the companion computer. Phone sign-in needs a registered HTTPS callback that reaches the companion; changing the callback to a plain HTTP LAN address will not work.": "需要 Spotify 高级会员和已配置的开发者应用。在电脑桥接服务设置 SPOTIFY_CLIENT_ID。使用默认回调地址时，先在电脑浏览器登录一次。手机登录需要已注册且可访问桥接服务的 HTTPS 回调，普通 HTTP 局域网地址不可用。",
+ "Spotify callback requirements": "Spotify 回调要求",
+ "Open this page in Safari. Connect your iPhone and Passport to the same home Wi-Fi as the companion computer.": "在苹果手机的 Safari 浏览器打开此页。手机、随身护照和电脑连接同一个家庭无线网络。",
+ "Open this page in Chrome. Connect your Android phone and Passport to the same home Wi-Fi as the companion computer.": "在安卓手机的 Chrome 浏览器打开此页。手机、随身护照和电脑连接同一个家庭无线网络。",
+ "On iPhone, enable Bluetooth and allow Komoot access in Settings → Privacy & Security → Bluetooth. Also allow Location Services for Komoot. Keep Komoot visible during the first connection.": "在苹果手机开启蓝牙，并在设置 → 隐私与安全性 → 蓝牙中允许 Komoot 访问，同时允许 Komoot 使用定位服务。首次连接时保持应用在前台。",
+ "Save your TXT or EPUB in the Files app, then tap Book file and choose it. Download an iCloud file to the phone first if it is unavailable.": "先将 TXT 或 EPUB 保存到文件应用，再点击选择文件。如无法选择云端文件，请先从 iCloud 下载到手机。",
+ "Choose your TXT or EPUB from Files or Downloads on Android.": "在安卓手机的文件或下载目录选择 TXT 或 EPUB。",
+ "Enter your companion access token first.": "请先输入电脑服务访问令牌。",
+ "Access token not accepted. Copy the companion service token and reconnect.": "访问令牌无效。请复制电脑服务令牌后重新连接。",
+ "Request failed. Try again.": "请求失败，请重试。",
+ "The companion took too long. Check it is awake, then retry.": "电脑服务响应超时。请确认电脑未休眠后重试。",
+ "Cannot reach the companion. Check Wi-Fi and that the computer is awake.": "无法连接电脑服务。请检查无线网络，并确认电脑未休眠。",
+ "Working…": "正在处理…",
+ "Updated.": "已更新。",
+ "Read on Passport": "在随身护照阅读",
+ "Read {0} on Passport": "在随身护照阅读《{0}》",
+ "{0} · Page {1} of {2}. Open Books on Passport to continue.": "{0} · 第 {1} 页，共 {2} 页。在随身护照打开阅读以继续。",
+ "Book selected. Open Books on Passport.": "已选择图书。请在随身护照打开阅读。",
+ "No books yet. Choose a file above and tap Add book.": "书架为空。请先选择文件，再点击添加图书。",
+ "Tap Connect companion to check this token.": "点击连接电脑服务以验证令牌。",
+ "First-time setup needed: configure the Spotify client ID on the companion.": "需要首次设置：请在电脑桥接服务配置 Spotify 客户端编号。",
+ "Update the Spotify callback to HTTPS or a computer loopback IP.": "请将 Spotify 回调改为 HTTPS 或电脑回环地址。",
+ "Spotify is linked. Start a song on your phone and check playback.": "Spotify 已连接。请在手机播放歌曲并检查播放状态。",
+ "Sign in once on the companion computer at http://127.0.0.1:4188/tools, then return here.": "请先在电脑打开 http://127.0.0.1:4188/tools 登录一次，再返回此页。",
+ "Ready to connect your Spotify account.": "可以连接 Spotify 账号。",
+ "Companion connected. Add a book or choose one below.": "电脑服务已连接。请添加图书或从书架选择。",
+ "Choose a book first.": "请先选择图书。",
+ "Choose a TXT or EPUB file.": "请选择 TXT 或 EPUB 文件。",
+ "Choose a non-empty book up to 4 MB.": "请选择非空且不超过 4 MB 的图书。",
+ "Book added. Tap Read on Passport beside its title.": "图书已添加。请点击书名旁的在随身护照阅读。",
+ "playing": "正在播放",
+ "paused": "已暂停",
+ "idle": "等待播放",
+ "error": "连接错误",
+ "loading": "正在加载",
+ "offline": "未连接",
+ "File must be 1 byte to 4 MB": "文件大小须为 1 字节至 4 MB",
+ "Use UTF-8 TXT or DRM-free EPUB": "请使用 UTF-8 TXT 或无版权加密的 EPUB",
+ "EPUB expands beyond limit": "EPUB 解压后超出大小限制",
+ "Invalid EPUB path": "EPUB 文件路径无效",
+ "Book text too large": "图书文本过大",
+ "Book contains no text": "图书没有可读取的文字",
+ "Library limit is 32 books": "书架最多保存 32 本图书",
+ "Book not found; refresh your bookshelf": "未找到图书，请刷新书架",
+ "Set SPOTIFY_CLIENT_ID on the companion": "请在电脑服务设置 SPOTIFY_CLIENT_ID",
+ "Spotify callback must use HTTPS, or a loopback IP on the companion computer": "Spotify 回调须使用 HTTPS 或电脑回环地址",
+ "Spotify rate limited; retry later": "Spotify 请求过多，请稍后重试",
+ "Sign in to Spotify at /tools": "请在设置页面登录 Spotify",
+ "Spotify login expired; sign in again": "Spotify 登录已过期，请重新登录",
+ "Spotify permission or Premium required": "需要 Spotify 授权或高级会员",
+ "Open Spotify and start playback on your phone": "请在手机打开 Spotify 并播放歌曲",
+ "Spotify unavailable": "Spotify 暂不可用",
+ "Spotify unavailable; check companion connection": "Spotify 不可用，请检查电脑连接",
+ "Start playback in Spotify": "请在 Spotify 播放歌曲",
+ "Service unavailable; check book format or Spotify configuration": "服务不可用，请检查图书格式或 Spotify 配置",
+ "Invalid request size": "请求大小无效",
+ "Spotify sign-in failed. Connect the companion and try again.": "Spotify 登录失败，请连接电脑服务后重试。",
+ "Spotify connected. Enter your companion token to continue.": "Spotify 已连接，请输入电脑服务令牌以继续。",
+ "Incomplete upload": "上传不完整，请重试"
+};
+const language=byId('language');
+const requested=new URLSearchParams(location.search).get('lang');
+language.value=requested==='en'||requested==='zh-CN'?requested:(navigator.language||'').toLowerCase().startsWith('zh')?'zh-CN':'en';
+function tr(key,...args){const text=language.value==='zh-CN'?(translations[key]||key):key;return text.replace(/\{(\d+)\}/g,(_,i)=>String(args[+i]??''));}
+const staticText=[],dynamicText=new Map();
+const walker=document.createTreeWalker(document.documentElement,NodeFilter.SHOW_TEXT);let node;
+while((node=walker.nextNode()))if(!['SCRIPT','STYLE'].includes(node.parentElement?.tagName)&&translations[node.nodeValue.trim()])staticText.push([node,node.nodeValue]);
+function ui(id,key,...args){dynamicText.set(id,[key,args]);byId(id).textContent=tr(key,...args);}
+function errorKey(error){return translations[error.message]?error.message:'Request failed. Try again.';}
+let shelf=[],reading=null,playback=null;
+function applyLanguage(){
+ document.documentElement.lang=language.value;
+ for(const [node,original] of staticText)node.nodeValue=original.replace(original.trim(),tr(original.trim()));
+ for(const [id,[key,args]] of dynamicText)byId(id).textContent=tr(key,...args);
+ phoneHelp();renderBooks();if(reading)reader(reading);if(playback)renderMusic(playback);
+ const url=new URL(location.href);url.searchParams.set('lang',language.value);history.replaceState(null,'',url);
+}
 function phoneHelp(){
  const iphone=byId('phone').value==='iphone';
- byId('phone_help').textContent=iphone?'Open this page in Safari. Connect your iPhone and Passport to the same home Wi-Fi as the companion computer.':'Open this page in Chrome. Connect your Android phone and Passport to the same home Wi-Fi as the companion computer.';
- byId('permissions').textContent=iphone?'On iPhone, enable Bluetooth and allow Komoot access in Settings → Privacy & Security → Bluetooth. Also allow Location Services for Komoot. Keep Komoot visible during the first connection.':'On Android, enable Bluetooth. In Settings → Apps → Komoot → Permissions, allow Location and Nearby devices when requested. Menu names vary by phone.';
- byId('file_help').textContent=iphone?'Save your TXT or EPUB in the Files app, then tap Book file and choose it. Download an iCloud file to the phone first if it is unavailable.':'Choose your TXT or EPUB from Files or Downloads on Android.';
+ ui('phone_help',iphone?'Open this page in Safari. Connect your iPhone and Passport to the same home Wi-Fi as the companion computer.':'Open this page in Chrome. Connect your Android phone and Passport to the same home Wi-Fi as the companion computer.');
+ ui('permissions',iphone?'On iPhone, enable Bluetooth and allow Komoot access in Settings → Privacy & Security → Bluetooth. Also allow Location Services for Komoot. Keep Komoot visible during the first connection.':'On Android, enable Bluetooth. In Settings → Apps → Komoot → Permissions, allow Location and Nearby devices when requested. Menu names vary by phone.');
+ ui('file_help',iphone?'Save your TXT or EPUB in the Files app, then tap Book file and choose it. Download an iCloud file to the phone first if it is unavailable.':'Choose your TXT or EPUB from Files or Downloads on Android.');
 }
 byId('phone').value=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)?'iphone':'android';
 byId('phone').onchange=phoneHelp;
-phoneHelp();
-function lock(){byId('book_controls').disabled=true;byId('music_controls').disabled=true;byId('list').replaceChildren();byId('reading').textContent='';byId('preview').textContent='';byId('preview_box').hidden=true;byId('music').textContent='Not checked yet.';byId('spotify_setup').textContent='Connect the companion above to check Spotify setup.'}
+language.onchange=applyLanguage;
+function lock(){byId('book_controls').disabled=true;byId('music_controls').disabled=true;shelf=[];reading=playback=null;byId('list').replaceChildren();byId('reading').textContent='';byId('preview').textContent='';byId('preview_box').hidden=true;ui('music','Not checked yet.');ui('spotify_setup','Connect the companion above to check Spotify setup.');}
 async function api(path,body,raw=false){
  const token=byId('token').value.trim();if(!token)throw Error('Enter your companion access token first.');
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000);
@@ -57,22 +185,36 @@ async function api(path,body,raw=false){
  }catch(error){if(error.name==='AbortError')throw Error('The companion took too long. Check it is awake, then retry.');if(error instanceof TypeError)throw Error('Cannot reach the companion. Check Wi-Fi and that the computer is awake.');throw error;}finally{clearTimeout(timer)}
 }
 let busy=false;
-async function run(button,work){if(busy)return;busy=true;button.disabled=true;byId('token').disabled=true;byId('status').textContent='Working…';try{const message=await work();byId('status').textContent=message||'Updated.'}catch(error){byId('status').textContent=error.message}finally{button.disabled=false;byId('token').disabled=false;busy=false}}
-async function music(){const s=await api('/v1/spotify');byId('music').textContent=[s.state,s.title,s.artist,s.device].filter(Boolean).join(' · ')}
-function reader(view){byId('reading').textContent=view.state==='reading'?view.title+' · Page '+(view.page+1)+' of '+view.pages+'. Open Books on Passport to continue.':'';byId('preview').textContent=view.text||'';byId('preview_box').hidden=view.state!=='reading'}
-async function books(){const data=await api('/v1/library');byId('list').replaceChildren();for(const book of data.books){const li=document.createElement('li'),title=document.createElement('span'),button=document.createElement('button');title.textContent=book.title;button.textContent='Read on Passport';button.setAttribute('aria-label','Read '+book.title+' on Passport');button.onclick=()=>run(button,async()=>{reader(await api('/v1/reader/control',{action:'select',id:book.id}));return 'Book selected. Open Books on Passport.'});li.append(title,button);byId('list').append(li)}if(!data.books.length)byId('list').textContent='No books yet. Choose a file above and tap Add book.';reader(await api('/v1/reader'))}
-byId('token').oninput=()=>{lock();byId('status').textContent='Tap Connect companion to check this token.'};
+async function run(button,work){if(busy)return;busy=true;button.disabled=true;byId('token').disabled=true;ui('status','Working…');try{ui('status',await work()||'Updated.')}catch(error){ui('status',errorKey(error))}finally{button.disabled=false;byId('token').disabled=false;busy=false}}
+function renderMusic(s){
+ const content=['playing','paused'].includes(s.state);
+ byId('music').textContent=[tr(s.state),content?s.title:tr(translations[s.title]?s.title:'Spotify unavailable'),s.artist,s.device].filter(Boolean).join(' · ');
+}
+async function music(){playback=await api('/v1/spotify');renderMusic(playback)}
+function reader(view){reading=view;byId('reading').textContent=view.state==='reading'?tr('{0} · Page {1} of {2}. Open Books on Passport to continue.',view.title,view.page+1,view.pages):'';byId('preview').textContent=view.text||'';byId('preview_box').hidden=view.state!=='reading'}
+function renderBooks(){
+ byId('list').replaceChildren();for(const book of shelf){const li=document.createElement('li'),title=document.createElement('span'),button=document.createElement('button');title.textContent=book.title;button.textContent=tr('Read on Passport');button.setAttribute('aria-label',tr('Read {0} on Passport',book.title));button.onclick=()=>run(button,async()=>{reader(await api('/v1/reader/control',{action:'select',id:book.id}));return 'Book selected. Open Books on Passport.'});li.append(title,button);byId('list').append(li)}
+ if(!shelf.length)byId('list').textContent=tr(byId('book_controls').disabled?'Connect the companion above to see your books.':'No books yet. Choose a file above and tap Add book.');
+}
+async function books(){shelf=(await api('/v1/library')).books;renderBooks();reader(await api('/v1/reader'))}
+byId('token').oninput=()=>{lock();ui('status','Tap Connect companion to check this token.')};
 byId('connect').onclick=()=>run(byId('connect'),async()=>{
- const setup=await api('/v1/setup');await books();byId('book_controls').disabled=false;byId('music_controls').disabled=false;
+ const setup=await api('/v1/setup');await books();byId('book_controls').disabled=false;byId('music_controls').disabled=false;renderBooks();
  const s=setup.spotify,local=['127.0.0.1','[::1]'].includes(location.hostname),canLogin=s.configured&&s.callback_valid&&(!s.computer_sign_in||local);
  byId('login').disabled=!canLogin;
- byId('spotify_setup').textContent=!s.configured?'First-time setup needed: configure the Spotify client ID on the companion.':!s.callback_valid?'Update the Spotify callback to HTTPS or a computer loopback IP.':s.connected?'Spotify is linked. Start a song on your phone and check playback.':!canLogin?'Sign in once on the companion computer at http://127.0.0.1:4188/tools, then return here.':'Ready to connect your Spotify account.';
+ ui('spotify_setup',!s.configured?'First-time setup needed: configure the Spotify client ID on the companion.':!s.callback_valid?'Update the Spotify callback to HTTPS or a computer loopback IP.':s.connected?'Spotify is linked. Start a song on your phone and check playback.':!canLogin?'Sign in once on the companion computer at http://127.0.0.1:4188/tools, then return here.':'Ready to connect your Spotify account.');
  return 'Companion connected. Add a book or choose one below.';
 });
-byId('login').onclick=()=>run(byId('login'),async()=>{const s=await api('/v1/spotify/login',{});location.assign(s.url)});
+byId('login').onclick=()=>run(byId('login'),async()=>{const s=await api('/v1/spotify/login',{language:language.value});location.assign(s.url)});
 byId('refresh').onclick=()=>run(byId('refresh'),music);
 byId('books').onclick=()=>run(byId('books'),books);
 for(const button of document.querySelectorAll('[data-action]'))button.onclick=()=>run(button,async()=>{await api('/v1/spotify/control',{action:button.dataset.action});await music()});
-byId('upload').onclick=()=>run(byId('upload'),async()=>{const file=byId('file').files[0];if(!file)throw Error('Choose a book first.');if(!/\.(txt|epub)$/i.test(file.name))throw Error('Choose a TXT or EPUB file.');if(!file.size||file.size>4194304)throw Error('Choose a non-empty book up to 4 MB.');await api('/v1/library/import?name='+encodeURIComponent(file.name),file,true);await books();byId('file').value='';return 'Book added. Tap Read on Passport beside its title.'});
+byId('choose_file').onclick=()=>byId('file').click();
+byId('file').onchange=()=>{if(byId('file').files[0]){dynamicText.delete('filename');byId('filename').textContent=byId('file').files[0].name;}else ui('filename','No file selected');};
+byId('upload').onclick=()=>run(byId('upload'),async()=>{const file=byId('file').files[0];if(!file)throw Error('Choose a book first.');if(!/\.(txt|epub)$/i.test(file.name))throw Error('Choose a TXT or EPUB file.');if(!file.size||file.size>4194304)throw Error('Choose a non-empty book up to 4 MB.');await api('/v1/library/import?name='+encodeURIComponent(file.name),file,true);await books();byId('file').value='';ui('filename','No file selected');return 'Book added. Tap Read on Passport beside its title.'});
+applyLanguage();
+const oauthResult=new URLSearchParams(location.search).get('spotify');
+if(oauthResult==='connected')ui('status','Spotify connected. Enter your companion token to continue.');
+if(oauthResult==='failed')ui('status','Spotify sign-in failed. Connect the companion and try again.');
 </script>
 </html>

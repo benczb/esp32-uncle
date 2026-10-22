@@ -37,13 +37,13 @@ class Spotify:
         return {'configured': bool(self.client), 'callback_valid': valid,
                 'computer_sign_in': loopback, 'connected': bool(self.tokens.get('refresh_token'))}
 
-    def login(self):
+    def login(self, language="en"):
         if not self.client: raise ValueError('Set SPOTIFY_CLIENT_ID on the companion')
         if not self.setup()['callback_valid']:
             raise ValueError('Spotify callback must use HTTPS, or a loopback IP on the companion computer')
         with self.lock:
-            state = secrets.token_urlsafe(32); verifier = secrets.token_urlsafe(64)
-            self.pending = (state, verifier, time.monotonic()+600)
+            state = ("zh." if language == "zh-CN" else "en.") + secrets.token_urlsafe(32); verifier = secrets.token_urlsafe(64)
+            self.pending = (state, verifier, time.monotonic()+600, "zh-CN" if language == "zh-CN" else "en")
         challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b'=').decode()
         query = urllib.parse.urlencode({'client_id': self.client, 'response_type': 'code',
             'redirect_uri': self.redirect, 'scope': 'user-read-playback-state user-modify-playback-state',
@@ -71,6 +71,7 @@ class Spotify:
             self.exchange({'grant_type': 'authorization_code', 'code': code,
                            'redirect_uri': self.redirect, 'code_verifier': pending[1]})
             self.due = 0
+            return pending[3]
 
     def api(self, path, method='GET', retried=False):
         if self.tokens.get('expires', 0) <= time.time():

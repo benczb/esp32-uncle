@@ -296,6 +296,22 @@ int main(int argc,char **argv) {
  }
  fixture_navigation.overlay_until_us=0;
  puts("Reader text sizes and navigation overlays: PASS");
+ /* Switching language must translate controls and retained protocol status. */
+ for(unsigned language=0;language<2;language++)for(unsigned page=PAGE_NAVIGATION;page<=PAGE_READER;page++){
+  passport_language_set(language);model.page=page;passport_ui_render(&model,86);lv_refr_now(d);
+  const char *expected=page==PAGE_NAVIGATION?(language?"OK: Stop navigation":"确定：停止导航"):
+                       page==PAGE_SPOTIFY?(language?"OK: Play/pause":"确定：播放/暂停"):
+                                          (language?"Up/Down: Pages":"上下：翻页");
+  bool found=false;lv_obj_t *root=lv_screen_active();
+  for(unsigned i=0;i<lv_obj_get_child_count(root);i++){
+   lv_obj_t *child=lv_obj_get_child(root,i);if(!lv_obj_check_type(child,&lv_label_class))continue;
+   const char *value=lv_label_get_text(child);if(!strcmp(value,expected))found=true;
+   if(!language){assert(!strstr(value,"Up/Down"));assert(!strstr(value,"Hold OK"));assert(strcmp(value,"playing"));assert(strcmp(value,"Komoot connected"));}
+  }
+  assert(found);snprintf(path,sizeof(path),"%s-localized-%u-%u.ppm",prefix,language,page);save(path);
+ }
+ puts("Retained feature states and controls follow language selection: PASS");
+
 
  /* Every appearance choice is previewed with the production renderer. */
  for(unsigned language=0;language<2;language++)for(unsigned choice=0;choice<3;choice++){

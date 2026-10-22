@@ -96,7 +96,7 @@ static void turn_arrow(unsigned direction){
  static const lv_point_precise_t right[]={{0,46},{0,17},{30,17},{15,2},{30,17},{15,32}};
  bool go_left=direction==4||direction==5||direction==6||direction==11;
  bool go_right=direction==7||direction==8||direction==9||direction==10;
- if(direction==3){text(177,105,40,"OK");return;}
+ if(direction==3){text(177,105,40,T("到达","OK"));return;}
  if(!go_left && !go_right && direction!=1 && direction!=2)return;
  lv_obj_t *line=lv_line_create(screen);lv_line_set_points(line,go_left?left:go_right?right:straight,go_left||go_right?6:5);
  lv_obj_set_pos(line,184,101);lv_obj_set_style_line_width(line,5,0);lv_obj_set_style_line_color(line,lv_color_hex(accent),0);
@@ -129,7 +129,7 @@ void passport_ui_render(const passport_model_t *m,int battery) {
   avatar(19,48);lv_obj_t *name=text(17,171,88,passport_config.name);
   lv_obj_set_height(name,20);lv_label_set_long_mode(name,LV_LABEL_LONG_DOT);
   lv_obj_t *tagline=text(17,195,88,passport_config.tagline);lv_obj_set_height(tagline,44);lv_label_set_long_mode(tagline,LV_LABEL_LONG_DOT);
-  box(110,47,113,90);text(117,50,106,"PSI · 24h");
+  box(110,47,113,90);text(117,50,106,T("PSI · 24小时","PSI · 24h"));
   char psi[16];if(passport_psi_value<0)strcpy(psi,"--");else snprintf(psi,sizeof(psi),"%d",passport_psi_value);
   lv_obj_t *reading=text(117,71,106,psi);if(!passport_language_get())lv_obj_set_style_text_font(reading,&lv_font_montserrat_32,0);
   if(passport_psi_value>100)lv_obj_set_style_text_color(reading,lv_color_hex(theme==1?0xffffff:0xffa789),0);
@@ -202,8 +202,8 @@ void passport_ui_render(const passport_model_t *m,int battery) {
  } else if(m->page==PAGE_PREFERENCES || m->page==PAGE_APPEARANCE || m->page==PAGE_LANGUAGE){
   bool appearance=m->page==PAGE_APPEARANCE,language=m->page==PAGE_LANGUAGE;
   unsigned count=appearance?3:language?2:4;
-  const char *choices[]={appearance?T("荧光绿","Neon Green"):language?"中文":T("Wi-Fi 网络","Wi-Fi network"),
-   appearance?T("白色","White"):language?"English":T("外观","Appearance"),
+  const char *choices[]={appearance?T("荧光绿","Neon Green"):language?T("中文","Chinese"):T("Wi-Fi 网络","Wi-Fi network"),
+   appearance?T("白色","White"):language?T("英文","English"):T("外观","Appearance"),
    appearance?T("全彩","Full Colour"):T("亮度","Brightness"),T("语言","Language")};
   for(unsigned i=0;i<count;i++){
    int y=70+i*42;
@@ -274,7 +274,7 @@ void passport_ui_render(const passport_model_t *m,int battery) {
   hint(22,262,198,(m->page==PAGE_HERMES || passport_muse_voice_ready())?T("按住下键说话 松开发送","Hold Down: talk"):T("Muse 蓝牙连接待完成","Muse Bluetooth pending"));
   hint(22,286,198,T("长按确定:返回菜单","Hold OK: Back to Menu"));
  } else if(m->page==PAGE_RADIO) {
-  text(24,58,192,"SINGAPORE / MALAYSIA");box(22,96,196,98);
+  text(24,58,192,T("新加坡 / 马来西亚","SINGAPORE / MALAYSIA"));box(22,96,196,98);
   text(33,112,175,passport_station[0]?passport_station:T("正在读取电台目录","Loading stations"));
   text(33,151,175,m->playing?T("正在播放","Playing"):T("已暂停","Paused"));
   text(24,208,190,T("上下换台","Up/Down: station"));
@@ -313,37 +313,37 @@ void passport_ui_render(const passport_model_t *m,int battery) {
   hint(22,287,198,T("长按确定:返回菜单","Hold OK: Back to Menu"));
  } else if(m->page==PAGE_NAVIGATION){
   passport_navigation_t nav;passport_navigation_snapshot(&nav);
-  lv_obj_t *label=text(22,52,196,nav.stale?"Route stale - check phone":nav.status);lv_obj_set_height(label,44);
+  lv_obj_t *label=text(22,52,196,nav.stale?T("路线已过期，请检查手机","Route stale - check phone"):passport_message(nav.status));lv_obj_set_height(label,44);
   if(nav.valid && !nav.stale && nav.enabled){
    turn_arrow(nav.turn.direction);
-   label=text(22,105,142,passport_turn_name(nav.turn.direction));lv_obj_set_height(label,40);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
-   char distance[48];snprintf(distance,sizeof(distance),"%lu m",(unsigned long)nav.turn.distance);
-   lv_obj_t *number=text(22,150,196,distance);lv_obj_set_style_text_font(number,&lv_font_montserrat_32,0);
+   label=text(22,105,142,passport_message(passport_turn_name(nav.turn.direction)));lv_obj_set_height(label,40);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
+   char distance[48];snprintf(distance,sizeof(distance),T("%lu 米","%lu m"),(unsigned long)nav.turn.distance);
+   lv_obj_t *number=text(22,150,196,distance);static lv_font_t distance_font;distance_font=lv_font_montserrat_32;distance_font.fallback=&passport_font_16;lv_obj_set_style_text_font(number,&distance_font,0);
    label=text(22,193,196,nav.turn.street);lv_obj_set_height(label,52);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
-  }else text(22,116,196,"Open Komoot on phone.\nStart a route, then\npress OK to connect.");
-  hint(22,266,196,nav.enabled?"OK: Stop navigation":"OK: Start navigation");
+  }else text(22,116,196,T("在手机打开 Komoot\n开始路线导航\n按确定连接","Open Komoot on phone.\nStart a route, then\npress OK to connect."));
+  hint(22,266,196,nav.enabled?T("确定：停止导航","OK: Stop navigation"):T("确定：开始导航","OK: Start navigation"));
   hint(22,290,196,T("长按确定:返回菜单","Hold OK: Menu"));
  } else if(m->page==PAGE_SPOTIFY){
-  text(22,53,196,passport_spotify.state);
-  lv_obj_t *label=text(22,88,196,passport_spotify.title);lv_obj_set_height(label,72);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
+  text(22,53,196,passport_message(passport_spotify.state));
+  lv_obj_t *label=text(22,88,196,(!strcmp(passport_spotify.state,"playing") || !strcmp(passport_spotify.state,"paused"))?passport_spotify.title:passport_message(passport_spotify.title));lv_obj_set_height(label,72);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
   label=text(22,167,196,passport_spotify.artist);lv_obj_set_height(label,46);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
   label=text(22,220,196,passport_spotify.device);lv_obj_set_height(label,22);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
-  hint(22,264,196,"Up/Down: Prev/Next");hint(22,288,196,"OK: Play/pause");
+  hint(22,264,196,T("上下：上一首/下一首","Up/Down: Prev/Next"));hint(22,288,196,T("确定：播放/暂停","OK: Play/pause"));
  } else if(m->page==PAGE_READER){
   const passport_reader_t *r=&passport_reader;
-  lv_obj_t *label=text(22,48,196,r->title);lv_obj_set_height(label,24);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
+  lv_obj_t *label=text(22,48,196,r->count?r->title:passport_message(r->title));lv_obj_set_height(label,24);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
   if(!strcmp(r->state,"reading") || (!strcmp(r->state,"offline") && r->text[0])){
    label=text(22,79,196,r->text);lv_obj_set_height(label,171);lv_label_set_long_mode(label,LV_LABEL_LONG_WRAP);
    if(r->large){static lv_font_t large;large=lv_font_montserrat_20;large.fallback=&passport_font_16;lv_obj_set_style_text_font(label,&large,0);}
-   char page[64];snprintf(page,sizeof(page),"%u / %u%s",r->page+1,r->pages,!strcmp(r->state,"offline")?" | offline":"");text(22,253,196,page);
-   hint(22,289,196,"Up/Down: Pages");
+   char page[64];snprintf(page,sizeof(page),"%u / %u%s",r->page+1,r->pages,!strcmp(r->state,"offline")?T(" | 离线"," | offline"):"");text(22,253,196,page);
+   hint(22,289,196,T("上下：翻页","Up/Down: Pages"));
   }else{
-   text(22,104,196,r->count?"Up/Down: Choose book\nOK: Read / Bookshelf":"Add TXT or EPUB\non companion /tools");
-   text(22,200,196,!strcmp(r->state,"offline")?"Companion unavailable":"Position saved on bridge");
-   hint(22,263,196,"Hold Up: Text size");hint(22,287,196,"Hold Down: Bookshelf");
+   text(22,104,196,r->count?T("上下：选择图书\n确定：阅读/书架","Up/Down: Choose book\nOK: Read / Bookshelf"):T("请在手机设置\n添加 TXT 或 EPUB","Add TXT or EPUB\non companion /tools"));
+   text(22,200,196,!strcmp(r->state,"offline")?T("电脑服务不可用","Companion unavailable"):T("阅读位置已保存","Position saved on bridge"));
+   hint(22,263,196,T("长按上：文字大小","Hold Up: Text size"));hint(22,287,196,T("长按下：返回书架","Hold Down: Bookshelf"));
   }
  } else if(m->page==PAGE_WEATHER) {
-  text(24,56,192,passport_config.city);text(24,100,192,passport_weather[0]?passport_weather:T("等待天气数据","Waiting for weather"));
+  text(24,56,192,!strcmp(passport_config.city,"singapore")?T("新加坡","Singapore"):!strcmp(passport_config.city,"johor-bahru")?T("新山","Johor Bahru"):!strcmp(passport_config.city,"kuala-lumpur")?T("吉隆坡","Kuala Lumpur"):!strcmp(passport_config.city,"penang")?T("槟城","Penang"):passport_config.city);text(24,100,192,passport_weather[0]?passport_weather:T("等待天气数据","Waiting for weather"));
   hint(22,218,198,T("来源:Open-Meteo\n室外天气 · 非机内传感器","Open-Meteo\nOutdoor weather"));
   hint(22,266,198,T("确定:刷新","OK: Refresh"));
   hint(22,290,198,T("长按确定:返回菜单","Hold OK: Back to Menu"));
@@ -353,7 +353,7 @@ void passport_ui_render(const passport_model_t *m,int battery) {
  passport_navigation_t overlay;passport_navigation_snapshot(&overlay);
  if(m->page!=PAGE_NAVIGATION && overlay.enabled && overlay.valid && !overlay.stale && overlay.overlay_until_us>esp_timer_get_time()){
   box(14,220,212,91);
-  char turn[80];snprintf(turn,sizeof(turn),"%s | %lu m",passport_turn_name(overlay.turn.direction),(unsigned long)overlay.turn.distance);
+  char turn[80];snprintf(turn,sizeof(turn),T("%s | %lu 米","%s | %lu m"),passport_message(passport_turn_name(overlay.turn.direction)),(unsigned long)overlay.turn.distance);
   lv_obj_t *label=text(22,229,196,turn);lv_obj_set_height(label,42);
   label=text(22,275,196,overlay.turn.street);lv_obj_set_height(label,24);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
  }
