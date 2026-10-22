@@ -120,7 +120,7 @@
     "id": "profile",
     "language": "en",
     "title": "Profile card",
-    "description": "A demo profile with no photo or contact number.",
+    "description": "Your illustrated portrait, with contact details hidden.",
     "time": 13.5,
     "image": "en-profile.png",
     "native": true
@@ -336,7 +336,7 @@
     "id": "profile",
     "language": "zh",
     "title": "个人名片",
-    "description": "演示名片，不含个人照片或联系电话。",
+    "description": "你的插画头像，联系资料保持隐藏。",
     "time": 37.5,
     "image": "zh-profile.png",
     "native": true

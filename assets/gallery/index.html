@@ -8,9 +8,10 @@
 <section aria-label="Passport screen gallery" id="gallery">
 <div class="toolbar"><p id="current" role="status" aria-live="polite"></p><div><button id="previous" type="button" aria-label="Previous image">←</button><button id="next" type="button" aria-label="Next image">→</button></div></div>
 <div class="rail" id="rail" tabindex="0" aria-label="Swipe left for more images"></div>
+<input id="gallery_scroll" class="gallery-scroll" type="range" min="0" max="1000" value="0" step="1" aria-label="Scroll through images">
 <p id="help">Swipe left, drag, or use the arrow buttons. Select an image to enlarge it.</p>
 </section>
-<div class="notes"><p id="privacy">Demo content only. No personal photo, phone number, private contact QR, device identifier or AI account details. The LinkedIn QR opens the owner’s public profile.</p><p id="accuracy">Software-rendered screens, framed with HyperFrames. Traffic Light views illustrate the app on main; navigation, music and books are on the feature branch. These are not photographs or live service readings.</p><a id="source_link" href="https://github.com/benczb/esp32-uncle/tree/feature/navigation-spotify-books/assets/gallery">View the gallery source</a></div>
+<div class="notes"><p id="privacy">Demo content with the owner-authorized illustrated portrait on Home and Profile. Phone numbers, private contact QRs, device identifiers and AI account details are excluded. The LinkedIn QR opens the owner’s public profile.</p><p id="accuracy">Software-rendered screens, framed with HyperFrames. Traffic Light views illustrate the app on main; navigation, music and books are on the feature branch. These are not photographs or live service readings.</p><a id="source_link" href="https://github.com/benczb/esp32-uncle/tree/feature/navigation-spotify-books/assets/gallery">View the gallery source</a></div>
 </main>
 <dialog id="zoom"><form method="dialog"><button id="close" aria-label="Close full-size image">Close</button></form><img id="large" alt=""></dialog>
 <script src="gallery.js"></script>
