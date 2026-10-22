@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head><base href="assets/gallery/"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>Pocket Uncle · Screen gallery</title><link rel="stylesheet" href="gallery.css"></head>
+<body>
+<header><a class="wordmark" href="https://github.com/benczb/esp32-uncle">ESP32 UNCLE</a><label><span id="language_label">Language</span> <select id="language"><option value="en">English</option><option value="zh">Chinese</option></select></label></header>
+<main>
+<div class="intro"><h1 id="heading">A pocketful of possibilities.</h1><p id="intro">Start with the original cover. Swipe left to explore every screen.</p></div>
+<section aria-label="Passport screen gallery" id="gallery">
+<div class="toolbar"><p id="current" role="status" aria-live="polite"></p><div><button id="previous" type="button" aria-label="Previous image">←</button><button id="next" type="button" aria-label="Next image">→</button></div></div>
+<div class="rail" id="rail" tabindex="0" aria-label="Swipe left for more images"></div>
+<p id="help">Swipe left, drag, or use the arrow buttons. Select an image to enlarge it.</p>
+</section>
+<div class="notes"><p id="privacy">Demo content only. No personal photo, phone number, private contact QR, device identifier or AI account details. The LinkedIn QR opens the owner’s public profile.</p><p id="accuracy">Software-rendered screens, framed with HyperFrames. Traffic Light views illustrate the app on main; navigation, music and books are on the feature branch. These are not photographs or live service readings.</p><a id="source_link" href="https://github.com/benczb/esp32-uncle/tree/feature/navigation-spotify-books/assets/gallery">View the gallery source</a></div>
+</main>
+<dialog id="zoom"><form method="dialog"><button id="close" aria-label="Close full-size image">Close</button></form><img id="large" alt=""></dialog>
+<script src="gallery.js"></script>
+</body></html>

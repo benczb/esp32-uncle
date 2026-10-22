@@ -1,0 +1,434 @@
+[
+  {
+    "id": "home",
+    "language": "en",
+    "title": "Home",
+    "description": "Weather, air quality and the day ahead.",
+    "time": 0.5,
+    "image": "en-home.png",
+    "native": true
+  },
+  {
+    "id": "menu",
+    "language": "en",
+    "title": "App menu",
+    "description": "Your tools in one place. Settings stays last.",
+    "time": 1.5,
+    "image": "en-menu.png",
+    "native": true
+  },
+  {
+    "id": "bus",
+    "language": "en",
+    "title": "Bus arrivals",
+    "description": "Your stop and the next three arrivals.",
+    "time": 2.5,
+    "image": "en-bus.png",
+    "native": true
+  },
+  {
+    "id": "train",
+    "language": "en",
+    "title": "Train alerts",
+    "description": "Read a service notice before you travel.",
+    "time": 3.5,
+    "image": "en-train.png",
+    "native": true
+  },
+  {
+    "id": "traffic-red",
+    "language": "en",
+    "title": "Traffic light · wait",
+    "description": "Pedestrian crossing: the red phase.",
+    "time": 4.5,
+    "image": "en-traffic-red.png",
+    "native": false
+  },
+  {
+    "id": "traffic-green",
+    "language": "en",
+    "title": "Traffic light · cross",
+    "description": "The green phase and its countdown.",
+    "time": 5.5,
+    "image": "en-traffic-green.png",
+    "native": false
+  },
+  {
+    "id": "navigation",
+    "language": "en",
+    "title": "Navigation",
+    "description": "Phone-powered directions for your next turn.",
+    "time": 6.5,
+    "image": "en-navigation.png",
+    "native": true
+  },
+  {
+    "id": "spotify",
+    "language": "en",
+    "title": "Spotify remote",
+    "description": "Playback controls; music stays on your player.",
+    "time": 7.5,
+    "image": "en-spotify.png",
+    "native": true
+  },
+  {
+    "id": "bookshelf",
+    "language": "en",
+    "title": "Bookshelf",
+    "description": "Choose a book and resume where you stopped.",
+    "time": 8.5,
+    "image": "en-bookshelf.png",
+    "native": true
+  },
+  {
+    "id": "books",
+    "language": "en",
+    "title": "Reading",
+    "description": "A page of text, ready for a quiet moment.",
+    "time": 9.5,
+    "image": "en-books.png",
+    "native": true
+  },
+  {
+    "id": "hermes",
+    "language": "en",
+    "title": "Hermes assistant",
+    "description": "Ask on your phone; read the reply here.",
+    "time": 10.5,
+    "image": "en-hermes.png",
+    "native": true
+  },
+  {
+    "id": "muse",
+    "language": "en",
+    "title": "Muse companion",
+    "description": "A private connection, without device identifiers.",
+    "time": 11.5,
+    "image": "en-muse.png",
+    "native": true
+  },
+  {
+    "id": "usage",
+    "language": "en",
+    "title": "Account overview",
+    "description": "Account information stays private.",
+    "time": 12.5,
+    "image": "en-usage.png",
+    "native": true
+  },
+  {
+    "id": "profile",
+    "language": "en",
+    "title": "Profile card",
+    "description": "A demo profile with no photo or contact number.",
+    "time": 13.5,
+    "image": "en-profile.png",
+    "native": true
+  },
+  {
+    "id": "linkedin",
+    "language": "en",
+    "title": "LinkedIn QR",
+    "description": "Scan to open Ben Cheng’s public LinkedIn profile.",
+    "time": 14.5,
+    "image": "en-linkedin.png",
+    "native": true
+  },
+  {
+    "id": "nfc",
+    "language": "en",
+    "title": "NFC profile",
+    "description": "A tap opens the same public profile.",
+    "time": 15.5,
+    "image": "en-nfc.png",
+    "native": true
+  },
+  {
+    "id": "radio",
+    "language": "en",
+    "title": "Radio",
+    "description": "Singapore and Malaysian stations in your pocket.",
+    "time": 16.5,
+    "image": "en-radio.png",
+    "native": true
+  },
+  {
+    "id": "weather",
+    "language": "en",
+    "title": "Weather",
+    "description": "Outdoor conditions for your chosen city.",
+    "time": 17.5,
+    "image": "en-weather.png",
+    "native": true
+  },
+  {
+    "id": "volume",
+    "language": "en",
+    "title": "Volume",
+    "description": "Adjust the speaker with the three buttons.",
+    "time": 18.5,
+    "image": "en-volume.png",
+    "native": true
+  },
+  {
+    "id": "settings",
+    "language": "en",
+    "title": "Settings",
+    "description": "Everyday preferences, together at the end.",
+    "time": 19.5,
+    "image": "en-settings.png",
+    "native": true
+  },
+  {
+    "id": "wifi",
+    "language": "en",
+    "title": "Wi-Fi setup",
+    "description": "Connect through the phone setup page.",
+    "time": 20.5,
+    "image": "en-wifi.png",
+    "native": true
+  },
+  {
+    "id": "appearance",
+    "language": "en",
+    "title": "Appearance",
+    "description": "Choose the display style that suits you.",
+    "time": 21.5,
+    "image": "en-appearance.png",
+    "native": true
+  },
+  {
+    "id": "brightness",
+    "language": "en",
+    "title": "Brightness",
+    "description": "Set a comfortable screen brightness.",
+    "time": 22.5,
+    "image": "en-brightness.png",
+    "native": true
+  },
+  {
+    "id": "language",
+    "language": "en",
+    "title": "Language",
+    "description": "Chinese stays Chinese. English stays English.",
+    "time": 23.5,
+    "image": "en-language.png",
+    "native": true
+  },
+  {
+    "id": "home",
+    "language": "zh",
+    "title": "首页",
+    "description": "天气、空气质量与每日信息。",
+    "time": 24.5,
+    "image": "zh-home.png",
+    "native": true
+  },
+  {
+    "id": "menu",
+    "language": "zh",
+    "title": "应用目录",
+    "description": "常用工具集中显示，设置始终位于最后。",
+    "time": 25.5,
+    "image": "zh-menu.png",
+    "native": true
+  },
+  {
+    "id": "bus",
+    "language": "zh",
+    "title": "巴士到站",
+    "description": "查看站点及接下来的三次到站时间。",
+    "time": 26.5,
+    "image": "zh-bus.png",
+    "native": true
+  },
+  {
+    "id": "train",
+    "language": "zh",
+    "title": "列车警报",
+    "description": "出行前查看列车服务通知。",
+    "time": 27.5,
+    "image": "zh-train.png",
+    "native": true
+  },
+  {
+    "id": "traffic-red",
+    "language": "zh",
+    "title": "交通灯 · 等候",
+    "description": "行人过路：红灯等候阶段。",
+    "time": 28.5,
+    "image": "zh-traffic-red.png",
+    "native": false
+  },
+  {
+    "id": "traffic-green",
+    "language": "zh",
+    "title": "交通灯 · 通行",
+    "description": "绿灯通行与倒计时。",
+    "time": 29.5,
+    "image": "zh-traffic-green.png",
+    "native": false
+  },
+  {
+    "id": "navigation",
+    "language": "zh",
+    "title": "导航",
+    "description": "由手机提供路线与下一个转向。",
+    "time": 30.5,
+    "image": "zh-navigation.png",
+    "native": true
+  },
+  {
+    "id": "spotify",
+    "language": "zh",
+    "title": "Spotify 遥控",
+    "description": "控制播放，音乐仍由原播放器播放。",
+    "time": 31.5,
+    "image": "zh-spotify.png",
+    "native": true
+  },
+  {
+    "id": "bookshelf",
+    "language": "zh",
+    "title": "书架",
+    "description": "选择图书，从已保存的位置继续。",
+    "time": 32.5,
+    "image": "zh-bookshelf.png",
+    "native": true
+  },
+  {
+    "id": "books",
+    "language": "zh",
+    "title": "阅读",
+    "description": "随时阅读一页文字，享受片刻宁静。",
+    "time": 33.5,
+    "image": "zh-books.png",
+    "native": true
+  },
+  {
+    "id": "hermes",
+    "language": "zh",
+    "title": "Hermes 助手",
+    "description": "通过手机提问，在设备阅读回复。",
+    "time": 34.5,
+    "image": "zh-hermes.png",
+    "native": true
+  },
+  {
+    "id": "muse",
+    "language": "zh",
+    "title": "Muse 手机伴侣",
+    "description": "保护隐私的连接，不展示设备标识。",
+    "time": 35.5,
+    "image": "zh-muse.png",
+    "native": true
+  },
+  {
+    "id": "usage",
+    "language": "zh",
+    "title": "账号概览",
+    "description": "账号信息保持私有。",
+    "time": 36.5,
+    "image": "zh-usage.png",
+    "native": true
+  },
+  {
+    "id": "profile",
+    "language": "zh",
+    "title": "个人名片",
+    "description": "演示名片，不含个人照片或联系电话。",
+    "time": 37.5,
+    "image": "zh-profile.png",
+    "native": true
+  },
+  {
+    "id": "linkedin",
+    "language": "zh",
+    "title": "领英二维码",
+    "description": "扫码打开 Ben Cheng 的公开领英主页。",
+    "time": 38.5,
+    "image": "zh-linkedin.png",
+    "native": true
+  },
+  {
+    "id": "nfc",
+    "language": "zh",
+    "title": "近场名片",
+    "description": "碰一碰打开同一个公开主页。",
+    "time": 39.5,
+    "image": "zh-nfc.png",
+    "native": true
+  },
+  {
+    "id": "radio",
+    "language": "zh",
+    "title": "广播",
+    "description": "随身收听新加坡与马来西亚电台。",
+    "time": 40.5,
+    "image": "zh-radio.png",
+    "native": true
+  },
+  {
+    "id": "weather",
+    "language": "zh",
+    "title": "天气",
+    "description": "查看所选城市的室外天气。",
+    "time": 41.5,
+    "image": "zh-weather.png",
+    "native": true
+  },
+  {
+    "id": "volume",
+    "language": "zh",
+    "title": "音量",
+    "description": "通过设备按键调整扬声器音量。",
+    "time": 42.5,
+    "image": "zh-volume.png",
+    "native": true
+  },
+  {
+    "id": "settings",
+    "language": "zh",
+    "title": "设置",
+    "description": "日常偏好设置集中放在最后。",
+    "time": 43.5,
+    "image": "zh-settings.png",
+    "native": true
+  },
+  {
+    "id": "wifi",
+    "language": "zh",
+    "title": "无线网络设置",
+    "description": "通过手机设置页面连接网络。",
+    "time": 44.5,
+    "image": "zh-wifi.png",
+    "native": true
+  },
+  {
+    "id": "appearance",
+    "language": "zh",
+    "title": "外观",
+    "description": "选择适合自己的显示风格。",
+    "time": 45.5,
+    "image": "zh-appearance.png",
+    "native": true
+  },
+  {
+    "id": "brightness",
+    "language": "zh",
+    "title": "亮度",
+    "description": "设置舒适的屏幕亮度。",
+    "time": 46.5,
+    "image": "zh-brightness.png",
+    "native": true
+  },
+  {
+    "id": "language",
+    "language": "zh",
+    "title": "语言",
+    "description": "中文界面全中文，英文界面全英文。",
+    "time": 47.5,
+    "image": "zh-language.png",
+    "native": true
+  }
+]
