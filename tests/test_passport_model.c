@@ -40,7 +40,7 @@ int main(void) {
  /* Both boundaries wrap, and each item remains selectable after wrapping. */
  passport_navigate(&m,0,false);assert(m.selected==PASSPORT_APP_COUNT-1);
  passport_navigate(&m,1,false);assert(m.selected==0);
- const passport_page_t expected[]={PAGE_BUS,PAGE_TRAIN,PAGE_ATHENA,PAGE_HERMES,PAGE_MUSE,PAGE_CARD,PAGE_RADIO,PAGE_WEATHER,PAGE_PREFERENCES,PAGE_NAVIGATION,PAGE_SPOTIFY,PAGE_READER};
+ const passport_page_t expected[]={PAGE_BUS,PAGE_TRAIN,PAGE_ATHENA,PAGE_HERMES,PAGE_MUSE,PAGE_CARD,PAGE_RADIO,PAGE_WEATHER,PAGE_NAVIGATION,PAGE_SPOTIFY,PAGE_READER,PAGE_PREFERENCES};
  for(unsigned i=0;i<3*PASSPORT_APP_COUNT;i++){
   assert(m.selected==i%PASSPORT_APP_COUNT);
   passport_navigate(&m,2,false);assert(m.page==expected[i%PASSPORT_APP_COUNT]);
@@ -72,7 +72,10 @@ int main(void) {
  passport_navigate(&settings,2,true);assert(settings.page==PAGE_PREFERENCES);
  assert(m.selected==0);
  for(unsigned i=0;i<3*PASSPORT_APP_COUNT;i++){passport_navigate(&m,0,false);assert(m.selected==(PASSPORT_APP_COUNT-1-i%PASSPORT_APP_COUNT));}
- m.selected=9;passport_navigate(&m,0,false);assert(m.selected==8);
+ /* The final item remains Settings, including after wrapping from the top. */
+ for(unsigned i=0;i<PASSPORT_APP_COUNT-1;i++)assert(passport_app_page(i)!=PAGE_PREFERENCES);
+ assert(passport_app_page(PASSPORT_APP_COUNT-1)==PAGE_PREFERENCES);
+ m.selected=0;passport_navigate(&m,0,false);assert(m.selected==PASSPORT_APP_COUNT-1);
  passport_navigate(&m,2,false);assert(m.page==PAGE_PREFERENCES);
  passport_navigate(&m,2,true); assert(m.page==PAGE_APPS);
  passport_navigate(&m,2,true); assert(m.page==PAGE_HOME);

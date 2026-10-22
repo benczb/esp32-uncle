@@ -158,13 +158,13 @@ void passport_ui_render(const passport_model_t *m,int battery) {
   hint(18,269,210,T("上:名片 下:巴士","Up: Card Down: Bus"));
   hint(18,290,210,T("确定:应用菜单","OK: Menu"));
  } else if(m->page==PAGE_APPS) {
-  static const char *apps_zh[]={"01  巴士到站","02  列车警报","03  AI 用量","04  Hermes 助手","05  Muse 助手","06  个人名片","07  城市收音机","08  本地天气","09  设置","10  导航","11  Spotify","12  阅读"};
-  static const char *apps_en[]={"01  Bus arrivals","02  Train alerts","03  AI Usage","04  Hermes","05  Muse","06  Profile card","07  SG/MY radio","08  Weather","09  Settings","10  Navigation","11  Spotify","12  Books"};
   unsigned first=m->selected>=8?m->selected-7:0;
   for(unsigned i=first;i<PASSPORT_APP_COUNT && i<first+8;i++) {
    int y=48+(i-first)*28;
    if(i==m->selected){lv_obj_t *s=box(15,y-2,210,26);lv_obj_set_style_bg_color(s,lv_color_hex(accent),0);}
-   lv_obj_t *l=text(24,y+3,199,(passport_language_get()?apps_en[i]:apps_zh[i]));
+   passport_page_t app=passport_app_page(i);char label[80];
+   snprintf(label,sizeof(label),"%02u  %s",i+1,passport_language_get()?titles_en[app]:titles_zh[app]);
+   lv_obj_t *l=text(24,y+3,199,label);
    if(i==m->selected)lv_obj_set_style_text_color(l,lv_color_hex(paper),0);
   }
   hint(20,270,208,T("上下选择 确定:打开","Up/Down | OK: Open"));

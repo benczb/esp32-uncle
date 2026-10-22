@@ -21,6 +21,9 @@ fixes in the working tree are retained and covered by the automated gate.
   order is preserved. The device keeps only its current page; a reachable
   companion is required to change pages. CJK fallback remains 16 px.
 
+Settings is always the final directory item. Rendering and button navigation use
+one shared order, with Settings appended after all feature apps.
+
 Hold OK returns to the menu. The reader sleeps after 90 seconds of inactivity;
 active navigation keeps its own screen awake. See the
 [application guide](pocket-passport.md#navigation-spotify-and-books) and
@@ -81,3 +84,15 @@ bitmap assets were copied. Other reviewed references were
 [TinyLibrary](https://github.com/jkingsman/TinyLibrary), and
 [AI Passport TV](https://github.com/zpdeng1020-coder/ai-passport-tv).
 Full maps and TV are outside this increment.
+
+## Settings-last menu update
+
+Settings is pinned after all feature apps by the shared menu-order function.
+The complete gate, Muse-enabled owner build, firmware verification and bilingual
+native menu rendering pass. This update is prepared but has not been flashed;
+the device handoff above refers to the previously approved image.
+
+New owner image SHA-256:
+`13ce868772aa3206020304ca5e03d0a9a51b3a03d4e487cbf1ac7c49d9bc76cf`.
+Matching ELF SHA-256:
+`34815c19d3becf0deb852698fe2b1c821ccd41836b3d4cda7fe041252b71f0d8`.

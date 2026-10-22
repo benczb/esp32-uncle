@@ -265,12 +265,13 @@ int main(int argc,char **argv) {
    for(unsigned i=0;i<lv_obj_get_child_count(root);i++){
     lv_obj_t *child=lv_obj_get_child(root,i);if(!lv_obj_check_type(child,&lv_label_class))continue;
     const char *value=lv_label_get_text(child);
-    if(strstr(value,"09  ")){assert(lv_obj_get_y(child)+lv_obj_get_height(child)<270);visible=true;}
+    char settings[80];snprintf(settings,sizeof(settings),"%02u  %s",PASSPORT_APP_COUNT,language?"Settings":"设置");
+    if(!strcmp(value,settings)){assert(lv_obj_get_y(child)+lv_obj_get_height(child)<270);visible=true;}
    }
-   if(selected==8)assert(visible);
+   if(selected==PASSPORT_APP_COUNT-1)assert(visible);
   }
  }
- puts("Train details: lossless bilingual font-wrapped pagination; ninth menu item visible: PASS");
+ puts("Train details: lossless bilingual font-wrapped pagination; Settings remains last and visible: PASS");
 
  /* Both reader sizes must fit complete bounded pages without clipping. */
  for(unsigned language=0;language<2;language++)for(unsigned large=0;large<2;large++){

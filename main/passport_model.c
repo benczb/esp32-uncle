@@ -17,7 +17,12 @@ bool passport_relay_pcm_frame_valid(const uint8_t *frame,size_t bytes,uint32_t g
  return received==generation;
 }
 static const passport_page_t apps[] = { PAGE_BUS, PAGE_TRAIN, PAGE_ATHENA, PAGE_HERMES,
- PAGE_MUSE, PAGE_CARD, PAGE_RADIO, PAGE_WEATHER, PAGE_PREFERENCES, PAGE_NAVIGATION, PAGE_SPOTIFY, PAGE_READER };
+ PAGE_MUSE, PAGE_CARD, PAGE_RADIO, PAGE_WEATHER, PAGE_NAVIGATION, PAGE_SPOTIFY, PAGE_READER };
+/* Settings is appended by policy, never interleaved with feature apps. */
+_Static_assert(sizeof(apps)/sizeof(apps[0])+1==PASSPORT_APP_COUNT,"Update the directory count when adding an app");
+passport_page_t passport_app_page(unsigned index){
+ return index<sizeof(apps)/sizeof(apps[0])?apps[index]:PAGE_PREFERENCES;
+}
 void passport_navigate(passport_model_t *m, unsigned key, bool hold) {
  if (key > 2) return;
  if (hold) { if(key == 2) {
@@ -28,10 +33,10 @@ void passport_navigate(passport_model_t *m, unsigned key, bool hold) {
  return; }
  if(m->page == PAGE_HOME) { m->page = key == 0 ? PAGE_CARD : key == 1 ? PAGE_BUS : PAGE_APPS; m->reply_page=0; }
  else if(m->page == PAGE_APPS) {
-  const unsigned count=sizeof(apps)/sizeof(apps[0]);
+  const unsigned count=PASSPORT_APP_COUNT;
   if(key == 0) m->selected=(m->selected+count-1)%count;
   else if(key == 1) m->selected=(m->selected+1)%count;
-  else if(key == 2) { m->page=apps[m->selected]; m->reply_page=0; }
+  else if(key == 2) { m->page=passport_app_page(m->selected); m->reply_page=0; }
  } else if(m->page==PAGE_PREFERENCES){
   if(key==0)m->reply_page=(m->reply_page+3)%4;
   else if(key==1)m->reply_page=(m->reply_page+1)%4;

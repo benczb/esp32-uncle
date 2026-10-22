@@ -17,6 +17,8 @@
   字号和逐书进度保存。EPUB 按 spine 顺序转换。设备只缓存当前页，翻页需要伴侣
   服务可达。中日韩回退字体仍为 16 px。
 
+设置始终位于应用目录最后。界面和按键导航共用同一顺序，在所有功能应用之后追加设置。
+
 长按确定返回菜单。阅读闲置 90 秒后熄屏；启用导航时导航页保持亮屏。
 操作、限制与账号设置详见
 [应用指南](pocket-passport.zh_CN.md#导航spotify-和阅读)和
@@ -67,3 +69,14 @@ ESP-IDF/NimBLE 接收器与 UI 为本地实现，未复制 Arduino UI 或位图�
 [TinyLibrary](https://github.com/jkingsman/TinyLibrary)和
 [AI Passport TV](https://github.com/zpdeng1020-coder/ai-passport-tv)。
 完整地图与电视不在本次范围内。
+
+## 设置始终置于菜单末尾
+
+共享菜单顺序函数会将设置固定追加在所有功能应用之后。完整验收、启用 Muse 的用户
+构建、固件验证和双语本机菜单渲染均通过。此更新已准备好，尚未烧录；上方设备交接
+记录对应此前获批镜像。
+
+新用户镜像 SHA-256：
+`13ce868772aa3206020304ca5e03d0a9a51b3a03d4e487cbf1ac7c49d9bc76cf`。
+对应 ELF SHA-256：
+`34815c19d3becf0deb852698fe2b1c821ccd41836b3d4cda7fe041252b71f0d8`。

@@ -11,6 +11,8 @@ typedef enum { PAGE_HOME, PAGE_APPS, PAGE_CARD, PAGE_ATHENA, PAGE_HERMES,
 typedef struct { passport_page_t page; unsigned selected; unsigned station;
  bool playing; bool volume_mode; unsigned reply_page; unsigned bus_stop; unsigned wifi_profile; } passport_model_t;
 /* key: 0 up, 1 down, 2 OK; hold: long-press, not release. */
+/* Shared directory order: Settings is always the final item. */
+passport_page_t passport_app_page(unsigned index);
 void passport_navigate(passport_model_t *m, unsigned key, bool hold);
 size_t passport_utf8_prefix(const char *text, size_t limit);
 
