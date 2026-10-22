@@ -245,3 +245,21 @@ Phone sign-in requires a registered HTTPS callback that reaches the companion;
 a plain HTTP LAN callback is rejected under
 [Spotify's callback rules](https://developer.spotify.com/documentation/web-api/concepts/redirect_uri).
 The phone page disables sign-in when the callback requires the computer.
+
+### Android and iPhone
+
+Use the same `/tools` page in Chrome on Android or Safari on iPhone. The phone
+selector suggests the detected platform and can be changed manually. Android
+instructions cover Komoot Location/Nearby devices permissions and Files/Downloads;
+iPhone instructions cover Bluetooth privacy permissions and uploads from Files.
+The browser page uses HTTP for setup and books; Komoot owns the direct BLE link.
+No separate native Android or iOS app is included.
+
+Use the same home Wi-Fi for the phone, Passport and companion. Both platforms
+retain the computer requirement for books/Spotify and the callback constraints
+above. This does not extend the optional Android relay to iPhone. Real phone
+file-picker behavior and Komoot pairing/background operation require acceptance
+on each platform; browser emulation does not prove BLE compatibility.
+
+Permission references: [Android](https://support.google.com/android/answer/9431959)
+and [iPhone](https://support.apple.com/en-us/102267).

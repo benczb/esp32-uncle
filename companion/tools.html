@@ -5,14 +5,16 @@
 <title>Pocket Passport · Phone setup</title>
 <style>
 :root{color-scheme:dark;font:16px/1.6 system-ui;background:#101821;color:#f4f7fa}
-body{max-width:42rem;margin:auto;padding:1.5rem 1.25rem}h1{font-size:1.75rem;line-height:1.2}h2{font-size:1.25rem;margin:0 0 .5rem}section{padding:1.5rem 0;border-top:1px solid #547086}label{display:block}input,button{font:inherit;padding:.65rem;border:1px solid #718a9d;border-radius:.3rem;background:#172632;color:inherit}input{box-sizing:border-box;max-width:100%;width:100%;margin:.5rem 0 1rem}button{min-height:44px;cursor:pointer;margin:.3rem .4rem .3rem 0}button:hover,button:focus-visible,a:focus-visible{outline:2px solid #65c9f5}button:disabled{opacity:.55;cursor:default}.primary{background:#65c9f5;color:#101821;border-color:#65c9f5}p{max-width:65ch}small{color:#c4d7e5}a{color:#65c9f5}#status{min-height:2rem;white-space:pre-wrap;overflow-wrap:anywhere}li{padding:.4rem 0;overflow-wrap:anywhere}#list{list-style:none;padding:0}#list li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem;border-bottom:1px solid #547086}#list span{flex:1 1 12rem}summary{cursor:pointer;padding:.5rem 0}#preview{white-space:pre-wrap;overflow-wrap:anywhere}fieldset{border:0;padding:0;margin:0;min-width:0}
+body{max-width:42rem;margin:auto;padding:1.5rem 1.25rem}h1{font-size:1.75rem;line-height:1.2}h2{font-size:1.25rem;margin:0 0 .5rem}section{padding:1.5rem 0;border-top:1px solid #547086}label{display:block}input,button,select{font:inherit;padding:.65rem;border:1px solid #718a9d;border-radius:.3rem;background:#172632;color:inherit}select{min-height:44px;max-width:100%;margin:.5rem 0 1rem}input{box-sizing:border-box;max-width:100%;width:100%;margin:.5rem 0 1rem}button{min-height:44px;cursor:pointer;margin:.3rem .4rem .3rem 0}button:hover,button:focus-visible,a:focus-visible{outline:2px solid #65c9f5}button:disabled{opacity:.55;cursor:default}.primary{background:#65c9f5;color:#101821;border-color:#65c9f5}p{max-width:65ch}small{color:#c4d7e5}a{color:#65c9f5}#status{min-height:2rem;white-space:pre-wrap;overflow-wrap:anywhere}li{padding:.4rem 0;overflow-wrap:anywhere}#list{list-style:none;padding:0}#list li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem;border-bottom:1px solid #547086}#list span{flex:1 1 12rem}summary{cursor:pointer;padding:.5rem 0}#preview{white-space:pre-wrap;overflow-wrap:anywhere}fieldset{border:0;padding:0;margin:0;min-width:0}
 </style>
 <main>
 <h1>Set up your Passport</h1>
-<p>Start a route, add a book, or connect your music.</p>
+<p>Start a route, add a book, or connect your music. Use this same page on Android or iPhone.</p>
+<label for="phone">Your phone</label><select id="phone"><option value="android">Android</option><option value="iphone">iPhone / iPad</option></select>
+<p id="phone_help" aria-live="polite"></p>
 <section aria-labelledby="navigation"><h2 id="navigation">Turn-by-turn navigation</h2>
-<ol><li>On your phone, enable Bluetooth and allow Komoot to use Bluetooth and location.</li><li>In Komoot, enable <strong>Bluetooth Connect</strong> if available, then start a route. Keep Komoot open for the first connection.</li><li>On Passport, open <strong>Navigation</strong> and press <strong>OK</strong>. Wait for a street name and distance.</li></ol>
-<p>No computer or access token is needed for navigation.</p>
+<ol><li id="permissions">On Android, enable Bluetooth. In Settings → Apps → Komoot → Permissions, allow Location and Nearby devices when requested. Menu names vary by phone.</li><li>In Komoot, enable <strong>Bluetooth Connect</strong> if available, then start a route. Keep Komoot open for the first connection.</li><li>On Passport, open <strong>Navigation</strong> and press <strong>OK</strong>. Wait for a street name and distance.</li></ol>
+<p>No computer or access token is needed for navigation. Komoot connects directly to Passport; this webpage does not pair Bluetooth devices.</p>
 <details><summary>Directions are not appearing?</summary><p>Keep the phone nearby and check that the route is running. Stop and restart the connection with OK. Current phone compatibility still needs testing; the reference implementation was tested on iOS only. If your Komoot app has no Bluetooth Connect option, this connection may not be supported.</p><a href="https://github.com/jstiefel/esp32_komoot_ble" target="_blank" rel="noopener noreferrer">Komoot connection reference</a></details>
 </section>
 <section aria-labelledby="connection"><h2 id="connection">Connect books & music</h2>
@@ -21,7 +23,7 @@ body{max-width:42rem;margin:auto;padding:1.5rem 1.25rem}h1{font-size:1.75rem;lin
 <p id="status" role="status" aria-live="polite">Enter your token to load your bookshelf.</p>
 </section>
 <section aria-labelledby="shelf"><h2 id="shelf">Your bookshelf</h2>
-<p>Choose a UTF-8 TXT or DRM-free EPUB from your phone, up to 4 MB.</p>
+<p>Choose a UTF-8 TXT or DRM-free EPUB from your phone, up to 4 MB.</p><p id="file_help">Choose your book from Files or Downloads on Android.</p>
 <fieldset id="book_controls" disabled><label for="file">Book file</label><input type="file" id="file" accept=".txt,.epub"><button id="upload" class="primary">Add book</button><button id="books">Refresh bookshelf</button><ul id="list"><li>Connect the companion above to see your books.</li></ul></fieldset>
 <p id="reading" role="status" aria-live="polite"></p><details id="preview_box" hidden><summary>Preview current page</summary><div id="preview"></div></details>
 <small>Open Books on Passport. Up/Down turns pages; OK returns to the shelf. Books and saved positions stay on the computer, which must remain reachable while reading. Phone relay does not currently forward book pages.</small>
@@ -35,6 +37,15 @@ body{max-width:42rem;margin:auto;padding:1.5rem 1.25rem}h1{font-size:1.75rem;lin
 </main>
 <script>
 const byId=id=>document.getElementById(id);
+function phoneHelp(){
+ const iphone=byId('phone').value==='iphone';
+ byId('phone_help').textContent=iphone?'Open this page in Safari. Connect your iPhone and Passport to the same home Wi-Fi as the companion computer.':'Open this page in Chrome. Connect your Android phone and Passport to the same home Wi-Fi as the companion computer.';
+ byId('permissions').textContent=iphone?'On iPhone, enable Bluetooth and allow Komoot access in Settings → Privacy & Security → Bluetooth. Also allow Location Services for Komoot. Keep Komoot visible during the first connection.':'On Android, enable Bluetooth. In Settings → Apps → Komoot → Permissions, allow Location and Nearby devices when requested. Menu names vary by phone.';
+ byId('file_help').textContent=iphone?'Save your TXT or EPUB in the Files app, then tap Book file and choose it. Download an iCloud file to the phone first if it is unavailable.':'Choose your TXT or EPUB from Files or Downloads on Android.';
+}
+byId('phone').value=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)?'iphone':'android';
+byId('phone').onchange=phoneHelp;
+phoneHelp();
 function lock(){byId('book_controls').disabled=true;byId('music_controls').disabled=true;byId('list').replaceChildren();byId('reading').textContent='';byId('preview').textContent='';byId('preview_box').hidden=true;byId('music').textContent='Not checked yet.';byId('spotify_setup').textContent='Connect the companion above to check Spotify setup.'}
 async function api(path,body,raw=false){
  const token=byId('token').value.trim();if(!token)throw Error('Enter your companion access token first.');

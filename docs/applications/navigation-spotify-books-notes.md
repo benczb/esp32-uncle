@@ -126,3 +126,22 @@ The gate's local verification archive is `build/firmware/ac4d79de44d2fe19a31ab27
 full image SHA-256 `ac4d79de44d2fe19a31ab277eec8076e892876669511cb28238b5c9a340b9c9f`,
 matching ELF SHA-256 `b83e4a6cb584d6e1ba06e091462a02b58403f055f1515e3be2207852cccabd0b`.
 This default test build does not replace the prepared Muse-enabled owner image.
+
+## Android and iPhone setup
+
+The shared `/tools` page now detects Android or iPhone/iPad and offers a manual
+phone selector. It shows platform-specific Komoot permissions, browser guidance
+and book file selection steps. Both use the same companion API and firmware.
+This is a shared browser interface, not a new native app or iPhone relay.
+
+Build: PASS — complete default firmware gate. Host tests: PASS — complete gate;
+Chromium with Android emulation and WebKit with iPhone emulation passed platform
+detection, manual switching, book upload/selection and 320/390/768 px layouts
+without JavaScript errors. Device tests: NOT RUN. Actual phone file pickers,
+Komoot BLE pairing, reconnect and background behavior remain unverified.
+No firmware changes or flashing were needed. Restart the companion and reload
+`/tools` to use the updated page.
+
+Local gate archive: `build/firmware/bba66c84e6a360e99b768050091e04195695d6822eba230bb4fb9d645ddf4f25/`.
+Full SHA-256: `bba66c84e6a360e99b768050091e04195695d6822eba230bb4fb9d645ddf4f25`.
+ELF SHA-256: `109a04258eaac15ab5f53526f7d0b23c5a448eb2c322aad3968b2d8421b3d0f1`.

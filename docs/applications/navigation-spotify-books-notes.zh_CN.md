@@ -102,3 +102,18 @@ Device tests: NOT RUN — 本次未进行设备测试。实际 Komoot、Spotify 
 完整镜像 SHA-256：`ac4d79de44d2fe19a31ab277eec8076e892876669511cb28238b5c9a340b9c9f`，
 匹配 ELF SHA-256：`b83e4a6cb584d6e1ba06e091462a02b58403f055f1515e3be2207852cccabd0b`。
 该默认测试构建不会替代已准备好的 Muse 启用版个人镜像。
+
+## Android 与 iPhone 设置
+
+共用 `/tools` 页面现在可检测 Android 或 iPhone/iPad，也提供手动手机选择器。
+页面显示对应平台的 Komoot 权限、浏览器和图书文件选择步骤。两者使用同一个桥接接口及固件。
+这是共用浏览器界面，并非新的原生应用或 iPhone 中继。
+
+Build: PASS — 完整默认固件检查。Host tests: PASS — 完整检查；Chromium 的 Android 模拟及
+WebKit 的 iPhone 模拟均通过平台检测、手动切换、图书上传/选择和 320/390/768 像素布局测试，
+没有 JavaScript 错误。Device tests: NOT RUN。真实手机的文件选择器、Komoot BLE 配对、
+重连和后台运行仍未验证。本次无需修改固件或刷机。重启桥接服务并重新加载 `/tools` 即可使用。
+
+Local gate archive: `build/firmware/bba66c84e6a360e99b768050091e04195695d6822eba230bb4fb9d645ddf4f25/`.
+Full SHA-256: `bba66c84e6a360e99b768050091e04195695d6822eba230bb4fb9d645ddf4f25`.
+ELF SHA-256: `109a04258eaac15ab5f53526f7d0b23c5a448eb2c322aad3968b2d8421b3d0f1`.

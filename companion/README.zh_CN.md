@@ -216,3 +216,18 @@ Android 浏览器中继不转发这些接口。它们并非只需手机的独立
 `GET /v1/setup` 返回需要身份验证的 Spotify 设置状态，不含凭据。
 `POST /v1/reader/control` 新增 `select` 操作，并通过书架中的 `id` 选择具体图书；
 原有 `previous`、`next`、`open`、`size`、`shelf` 操作保持兼容。
+
+### Android 与 iPhone
+
+Android 使用 Chrome、iPhone 使用 Safari 打开同一个 `/tools` 页面。
+手机选择器会建议检测到的平台，也可手动切换。Android 提示涵盖 Komoot 的位置/附近设备权限和
+Files/Downloads 文件选择；iPhone 提示涵盖蓝牙隐私权限和 Files 文件上传。
+浏览器页面通过 HTTP 完成设置和图书操作，Komoot 负责直接 BLE 连接。
+本项目不包含独立的 Android 或 iOS 原生应用。
+
+手机、Passport 和电脑桥接服务使用同一个家庭 Wi-Fi。两个平台的图书/Spotify 都仍需要电脑，
+并受上述回调要求约束。本次不将可选 Android 中继扩展到 iPhone。
+实际文件选择器、Komoot 配对与后台运行需要分别在两个平台验收；浏览器模拟不能证明 BLE 兼容性。
+
+权限参考：[Android](https://support.google.com/android/answer/9431959)
+及 [iPhone](https://support.apple.com/en-us/102267)。
