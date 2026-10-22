@@ -53,3 +53,14 @@ and account views use generic demo content. No device or account was queried.
 The publication consists only of these curated images, static gallery source
 and the existing cover. Firmware, build trees and private configuration are not
 part of the gallery or its GitHub Pages deployment.
+
+## Publication checks
+
+The GitHub Pages homepage returns HTTP 200. All 48 deployed PNGs were fetched
+and matched byte for byte to the reviewed local exports. A scan of every final
+image found only the two authorized LinkedIn QRs, both with the exact approved
+URL. HyperFrames passed with zero lint/layout/contrast findings. Android Chrome,
+iPhone WebKit and desktop checks covered the cover-first order, next/previous,
+left drag, all 25 slides per language, full-size viewing, keyboard controls and
+language switching. Repository checks pass. This is a media/documentation update;
+no firmware was changed or flashed.
