@@ -65,3 +65,12 @@ Droid Sans Fallback GB2312 子集（16 像素、2 bpp、不压缩）。
 
 `licenses/bus-aunty-mini-MIT.txt` 保留巴士参考项目的完整
 `Copyright (c) 2026 awesomelionel` MIT 声明。
+
+## 公开屏幕画廊
+
+[`gallery/`](gallery/README.zh_CN.md)包含 48 张 HyperFrames 图片（每种语言各 24 个视图）、
+可编辑源文件及可滑动画廊，原有的 [`images/pocket-uncle-cover.png`](images/pocket-uncle-cover.png)
+仍放在第一张。所有者明确授权在首页使用所提供的插画头像，并展示公开领英二维码；
+私人联系二维码、电话号码、设备标识和人工智能账号详情均排除在外。
+确切来源提交、尺寸、第三方声明及隐私边界见画廊的来源和复现说明。
+头像源文件为已授权的插画，并非设备上的私人照片。这些预览不能作为固件验收证据。

@@ -1,0 +1,46 @@
+[English](README.md) · **简体中文**
+
+# 随身护照屏幕画廊
+
+[画廊](index.html)将原封面放在第一张，随后展示每种语言各 24 个视图。
+向左滑动、拖动或使用按钮/键盘即可查看下一张，点击图片可放大。
+中英文分别导出图片。根目录 README 使用兼容 GitHub 的横向图片表格，
+链接的[公开画廊](https://benczb.github.io/esp32-uncle/?lang=zh)提供完整轮播交互。
+
+## 来源与复现
+
+- `images/`：通过 HyperFrames 0.8.185 导出的 48 张 1080 × 1440 PNG 图片。
+- `screens.json`：视图名称、语言、截图时间和导出文件名。
+- `hyperframes/`：可编辑工程，每张图片有独立子合成。
+- `hyperframes/assets/screens/`：使用 `3d74cb7` 提交中的正式渲染器生成的
+  240 × 320 LVGL 演示数据画面。交通灯灯面来自 `main` 上 `43a0856` 提交的公开素材；
+  这两个视图是交通灯界面的示意，并非固件设备验收结果。
+- `hyperframes/assets/home-portrait.jpg`：所有者提供的插画头像，在最初的隐私排除要求之后
+  明确授权用于首页。通过合成将头像放进首页头像槽，原文件不含 EXIF 元数据。
+  其他私人照片仍排除在外。
+- 第一张封面来自 `main` 已有的 `../images/pocket-uncle-cover.png`。
+- 打包的 GSAP 3.14.2 仅用于暂停的截图时间线，保留原始声明；参见
+  [说明](hyperframes/assets/vendor/NOTICE.txt)和[标准许可](https://gsap.com/standard-license/)。
+  项目自编源文件遵循仓库许可，第三方许可仍适用。
+
+使用 Node.js 22+ 和可用的 Chrome，在 `hyperframes/` 运行：
+
+```bash
+npm run check
+npm run snapshots
+# 只重新导出已授权的首页头像视图：
+node export.mjs --home
+```
+
+无需视频、音频、云渲染器或私人运行服务。图片是软件预览，并非设备实拍或实时服务数据。
+画廊涵盖 `main` 上的交通灯应用及导航/音乐/图书功能分支，不代表这些固件分支已经合并。
+
+## 公开内容边界
+
+唯一二维码内容是已明确授权的公开主页：`https://www.linkedin.com/in/ben-cheng`。
+两张最终二维码图片均已解码，并与该网址完全匹配。不含联系电话、微信/WhatsApp 二维码、
+设备标识、人工智能提供商/账号详情、私人令牌或实时个人资料。首页仅使用新授权的插画头像，
+其余名片与账号视图使用通用演示内容，未查询设备或账号。
+
+发布内容仅包含这些经过筛选的图片、静态画廊源文件及原封面。
+固件、构建目录和私人配置不会加入画廊或 GitHub Pages 部署。

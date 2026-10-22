@@ -72,3 +72,15 @@ font licence notices remain.
 
 `licenses/bus-aunty-mini-MIT.txt` preserves the complete original
 `Copyright (c) 2026 awesomelionel` MIT notice for the bus reference project.
+
+## Public screen gallery
+
+[`gallery/`](gallery/README.md) contains 48 HyperFrames stills (24 views in each
+language), their editable source and a swipeable gallery. The original
+[`images/pocket-uncle-cover.png`](images/pocket-uncle-cover.png) stays first.
+The owner explicitly authorized the supplied illustrated portrait for the Home
+image and the public LinkedIn QR; private contact QRs, phone numbers, gadget IDs
+and AI account details are excluded. See the gallery's provenance and reproduction
+notes for the exact source commits, dimensions, third-party notice and privacy
+boundary. The source portrait is the authorized illustration, not a private
+photograph from the device. These previews are not firmware acceptance evidence.
