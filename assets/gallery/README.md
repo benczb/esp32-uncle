@@ -66,3 +66,5 @@ language switching. Repository checks pass. This is a media/documentation update
 no firmware was changed or flashed.
 
 A persistent scrollbar below the images supports phone and desktop browsing.
+
+Gallery order: cover, Home, Menu, demo Codex balance, Profile card, LinkedIn QR, NFC profile, then the remaining screens. Codex values are synthetic examples, never account readings.
