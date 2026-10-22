@@ -18,8 +18,8 @@ The root README includes a GitHub-compatible horizontal image table; the linked
   come from the public `main` artwork at commit `43a0856`; those two views are
   illustrations of the traffic interface, not firmware acceptance evidence.
 - `hyperframes/assets/home-portrait.jpg`: the owner-supplied illustrated portrait,
-  explicitly authorized for Home after the initial privacy exclusions. It is
-  positioned in the Home avatar slot by the composition. The original has no
+  explicitly authorized for Home and Profile after the initial privacy exclusions. It is
+  positioned in the Home and Profile avatar slots by the composition. The original has no
   EXIF metadata. Other personal photos remain excluded.
 - The first cover is the existing `../images/pocket-uncle-cover.png` from `main`.
 - GSAP 3.14.2 is bundled solely for the paused snapshot timeline. Its original
@@ -47,8 +47,8 @@ The only QR payload is the explicitly authorized public profile:
 `https://www.linkedin.com/in/ben-cheng`. Both final QR exports were decoded and
 matched to that exact URL. There are no phone numbers, WeChat/WhatsApp QRs,
 gadget identifiers, AI provider/account details, private tokens or live profiles.
-Home contains only the newly authorized illustrated portrait. The other profile
-and account views use generic demo content. No device or account was queried.
+Home and Profile contain the authorized illustrated portrait. Account views
+use generic demo content. No device or account was queried.
 
 The publication consists only of these curated images, static gallery source
 and the existing cover. Firmware, build trees and private configuration are not
@@ -64,3 +64,5 @@ iPhone WebKit and desktop checks covered the cover-first order, next/previous,
 left drag, all 25 slides per language, full-size viewing, keyboard controls and
 language switching. Repository checks pass. This is a media/documentation update;
 no firmware was changed or flashed.
+
+A persistent scrollbar below the images supports phone and desktop browsing.
