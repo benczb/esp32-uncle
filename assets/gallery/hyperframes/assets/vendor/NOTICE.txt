@@ -1,0 +1,4 @@
+GSAP 3.14.2 by GreenSock. Original copyright and license header retained in gsap.min.js.
+Standard no-charge license: https://gsap.com/standard-license/
+Source: https://www.npmjs.com/package/gsap/v/3.14.2
+Used only to register the paused HyperFrames snapshot timeline.

@@ -1,0 +1,15 @@
+import {readFile,copyFile,mkdir,mkdtemp,rm} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {dirname,join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {spawnSync} from 'node:child_process';
+const project=dirname(fileURLToPath(import.meta.url));
+const rows=JSON.parse(await readFile(join(project,'..','screens.json'),'utf8'));
+const selected=process.argv.includes('--home')?rows.filter(row=>row.id==='home'):rows;
+const output=await mkdtemp(join(tmpdir(),'passport-gallery-export-'));
+const result=spawnSync('npx',['--yes','hyperframes@0.8.185','snapshot',project,'--at',selected.map(row=>row.time).join(','),'--no-end','--keep','--output',output],{stdio:'inherit',env:{...process.env,TMPDIR:'/tmp'}});
+if(result.status!==0)process.exit(result.status||1);
+await mkdir(join(project,'..','images'),{recursive:true});
+for(const row of selected)await copyFile(join(output,'at-'+row.time+'s.png'),join(project,'..','images',row.image));
+await rm(output,{recursive:true});
+console.log('Exported '+selected.length+' gallery images.');
