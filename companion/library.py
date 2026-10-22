@@ -41,7 +41,7 @@ def convert(name, data):
         package_name = rootfile.attrib['full-path']
         package = ET.fromstring(archive.read(package_name))
         manifest = {x.attrib['id']: x.attrib['href'] for x in package.iter() if x.tag.endswith('}item')}
-        chapters = []
+        chapters = []; text_bytes = 0
         for item in package.iter():
             if not item.tag.endswith('}itemref'): continue
             href = manifest[item.attrib['idref']].split('#')[0]
@@ -52,7 +52,10 @@ def convert(name, data):
             path = posixpath.normpath(path)
             if path.startswith('../') or path.startswith('/'): raise ValueError('Invalid EPUB path')
             parser = Text(); parser.feed(archive.read(path).decode('utf-8-sig'))
-            chapters.append(''.join(parser.parts))
+            chapter = ''.join(parser.parts)
+            text_bytes += len(chapter.encode()) + 2
+            if text_bytes > MAX_TEXT: raise ValueError('Book text too large')
+            chapters.append(chapter)
         text = '\n\n'.join(chapters)
         if len(text.encode()) > MAX_TEXT: raise ValueError('Book text too large')
         return text
@@ -122,6 +125,16 @@ class Library:
             return {'state': 'reading' if self.reading else 'shelf', 'title': book['title'],
                     'id': book['id'], 'index': index, 'count': len(books), 'page': page,
                     'pages': len(pages), 'large': large, 'text': pages[page] if self.reading else ''}
+
+    def select(self, identity):
+        # Validate against the shelf before constructing any file path.
+        with self.lock:
+            if not isinstance(identity, str) or not any(b['id'] == identity for b in self.books()):
+                raise ValueError('Book not found; refresh your bookshelf')
+            self.state['id'] = identity
+            self.reading = True
+            self.save()
+            return self.snapshot()
 
     def control(self, action):
         if action not in ('previous', 'next', 'open', 'size', 'shelf'): raise ValueError('Unknown reader action')

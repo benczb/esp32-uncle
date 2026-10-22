@@ -80,3 +80,25 @@ ESP-IDF/NimBLE 接收器与 UI 为本地实现，未复制 Arduino UI 或位图�
 `13ce868772aa3206020304ca5e03d0a9a51b3a03d4e487cbf1ac7c49d9bc76cf`。
 对应 ELF SHA-256：
 `34815c19d3becf0deb852698fe2b1c821ccd41836b3d4cda7fe041252b71f0d8`。
+
+## 手机设置与仓库检查
+
+电脑桥接服务的手机页面新增 Komoot 连接步骤、令牌检查、需身份验证的 Spotify 设置诊断、
+直接选择图书、当前页预览和明确的错误提示。选择图书会恢复已保存页码，重复选择不会退出阅读。
+无效图书 ID 不能作为文件路径使用。EPUB 转换在拼接章节之前限制累计文本大小，包括重复的阅读顺序条目。
+Spotify 设置检查拒绝不受支持的回调，并防止手机界面发起仅适用于电脑回环地址的登录。
+
+就绪状态仍有限制：Komoot 参考项目已弃用且仅在 iOS 测试过；当前 Android/iPhone 应用兼容性需要实测。
+电子书翻页需要可访问的电脑桥接服务，手机中继不转发图书或 Spotify。本次没有新增离线存储或手机应用。
+参见[手机设置](../../companion/README.zh_CN.md#简单的手机设置)。
+
+Build: PASS — 完整检查，ESP-IDF 5.5.3 默认配置（Muse 关闭）。
+Host tests: PASS — 全仓库检查及八项功能测试。Chromium 手机视口通过身份验证失败与重试、设置诊断、
+TXT 上传、指定图书选择、预览和凭据清除测试；320/390/768/1280 像素布局无横向溢出或 JavaScript 错误。
+Device tests: NOT RUN — 本次未进行设备测试。实际 Komoot、Spotify 授权、设备阅读和网络共存仍未验证。
+本次未修改固件代码，也未刷机。重启电脑桥接服务即可加载改动。
+
+本地验证归档为 `build/firmware/ac4d79de44d2fe19a31ab277eec8076e892876669511cb28238b5c9a340b9c9f/`；
+完整镜像 SHA-256：`ac4d79de44d2fe19a31ab277eec8076e892876669511cb28238b5c9a340b9c9f`，
+匹配 ELF SHA-256：`b83e4a6cb584d6e1ba06e091462a02b58403f055f1515e3be2207852cccabd0b`。
+该默认测试构建不会替代已准备好的 Muse 启用版个人镜像。

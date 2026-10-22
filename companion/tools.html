@@ -1,24 +1,67 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pocket Passport · Music & books</title>
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pocket Passport · Phone setup</title>
 <style>
-:root{color-scheme:dark;font:16px/1.6 system-ui;background:#101821;color:#f4f7fa}body{max-width:42rem;margin:auto;padding:2rem 1.25rem}h1{font-size:1.75rem;line-height:1.2}h2{font-size:1.25rem;margin:0 0 .5rem}section{padding:1.5rem 0;border-top:1px solid #547086}label{display:block}input,button{font:inherit;padding:.65rem;border:1px solid #718a9d;border-radius:.3rem;background:#172632;color:inherit}input{box-sizing:border-box;max-width:100%;width:100%;margin:.5rem 0 1rem}button{cursor:pointer;margin:.3rem .4rem .3rem 0}button:hover,button:focus-visible{outline:2px solid #65c9f5}button:disabled{opacity:.55;cursor:wait}.primary{background:#65c9f5;color:#101821;border-color:#65c9f5}p{max-width:65ch}small{color:#c4d7e5}#status{min-height:2rem;white-space:pre-wrap}li{padding:.3rem 0}
-</style><h1>Music & books</h1><p>Connect Spotify and choose what to read on your Pocket Passport.</p>
-<section><label for="token">Companion access token</label><input id="token" type="password" autocomplete="off"><small>Use the service token from Passport settings. It stays in this tab.</small></section>
-<section><h2>Spotify</h2><p>Playback stays on your phone or Spotify player. Premium and a configured Spotify developer app are required.</p><button id="login" class="primary">Connect Spotify</button><button id="refresh">Check connection</button><p id="music">Not checked yet.</p><button data-action="previous">Previous</button><button data-action="toggle">Play / pause</button><button data-action="next">Next</button></section>
-<section><h2>Your bookshelf</h2><p>Upload a UTF-8 TXT or DRM-free EPUB, up to 4 MB. Books and reading position stay on this companion computer.</p><label for="file">Choose a book</label><input type="file" id="file" accept=".txt,.epub"><button id="upload" class="primary">Add to bookshelf</button><button id="books">Refresh bookshelf</button><ul id="list"></ul></section>
-<p id="status" role="status" aria-live="polite"></p>
+:root{color-scheme:dark;font:16px/1.6 system-ui;background:#101821;color:#f4f7fa}
+body{max-width:42rem;margin:auto;padding:1.5rem 1.25rem}h1{font-size:1.75rem;line-height:1.2}h2{font-size:1.25rem;margin:0 0 .5rem}section{padding:1.5rem 0;border-top:1px solid #547086}label{display:block}input,button{font:inherit;padding:.65rem;border:1px solid #718a9d;border-radius:.3rem;background:#172632;color:inherit}input{box-sizing:border-box;max-width:100%;width:100%;margin:.5rem 0 1rem}button{min-height:44px;cursor:pointer;margin:.3rem .4rem .3rem 0}button:hover,button:focus-visible,a:focus-visible{outline:2px solid #65c9f5}button:disabled{opacity:.55;cursor:default}.primary{background:#65c9f5;color:#101821;border-color:#65c9f5}p{max-width:65ch}small{color:#c4d7e5}a{color:#65c9f5}#status{min-height:2rem;white-space:pre-wrap;overflow-wrap:anywhere}li{padding:.4rem 0;overflow-wrap:anywhere}#list{list-style:none;padding:0}#list li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem;border-bottom:1px solid #547086}#list span{flex:1 1 12rem}summary{cursor:pointer;padding:.5rem 0}#preview{white-space:pre-wrap;overflow-wrap:anywhere}fieldset{border:0;padding:0;margin:0;min-width:0}
+</style>
+<main>
+<h1>Set up your Passport</h1>
+<p>Start a route, add a book, or connect your music.</p>
+<section aria-labelledby="navigation"><h2 id="navigation">Turn-by-turn navigation</h2>
+<ol><li>On your phone, enable Bluetooth and allow Komoot to use Bluetooth and location.</li><li>In Komoot, enable <strong>Bluetooth Connect</strong> if available, then start a route. Keep Komoot open for the first connection.</li><li>On Passport, open <strong>Navigation</strong> and press <strong>OK</strong>. Wait for a street name and distance.</li></ol>
+<p>No computer or access token is needed for navigation.</p>
+<details><summary>Directions are not appearing?</summary><p>Keep the phone nearby and check that the route is running. Stop and restart the connection with OK. Current phone compatibility still needs testing; the reference implementation was tested on iOS only. If your Komoot app has no Bluetooth Connect option, this connection may not be supported.</p><a href="https://github.com/jstiefel/esp32_komoot_ble" target="_blank" rel="noopener noreferrer">Komoot connection reference</a></details>
+</section>
+<section aria-labelledby="connection"><h2 id="connection">Connect books & music</h2>
+<p>Keep the companion computer running. Your phone and Passport must both be able to reach it. The simplest setup is the same home Wi-Fi.</p>
+<label for="token">Companion access token</label><input id="token" type="password" autocomplete="off" spellcheck="false" aria-describedby="token_help"><small id="token_help">Use the service access token entered in Passport settings, not the six-digit device code. It stays in this tab.</small><p><button id="connect" class="primary">Connect companion</button></p>
+<p id="status" role="status" aria-live="polite">Enter your token to load your bookshelf.</p>
+</section>
+<section aria-labelledby="shelf"><h2 id="shelf">Your bookshelf</h2>
+<p>Choose a UTF-8 TXT or DRM-free EPUB from your phone, up to 4 MB.</p>
+<fieldset id="book_controls" disabled><label for="file">Book file</label><input type="file" id="file" accept=".txt,.epub"><button id="upload" class="primary">Add book</button><button id="books">Refresh bookshelf</button><ul id="list"><li>Connect the companion above to see your books.</li></ul></fieldset>
+<p id="reading" role="status" aria-live="polite"></p><details id="preview_box" hidden><summary>Preview current page</summary><div id="preview"></div></details>
+<small>Open Books on Passport. Up/Down turns pages; OK returns to the shelf. Books and saved positions stay on the computer, which must remain reachable while reading. Phone relay does not currently forward book pages.</small>
+</section>
+<section aria-labelledby="spotify"><h2 id="spotify">Spotify</h2>
+<p>Music plays on your phone or Spotify player. Start a song in Spotify, then use Passport as the remote.</p>
+<p id="spotify_setup">Connect the companion above to check Spotify setup.</p>
+<fieldset id="music_controls" disabled><button id="login" class="primary">Connect Spotify</button><button id="refresh">Check playback</button><p id="music">Not checked yet.</p><button data-action="previous">Previous</button><button data-action="toggle">Play / pause</button><button data-action="next">Next</button></fieldset>
+<details><summary>First-time Spotify setup</summary><p>Spotify Premium and a configured developer app are required. Set SPOTIFY_CLIENT_ID on the companion. With the default callback, sign in once using a browser on the companion computer. Phone sign-in needs a registered HTTPS callback that reaches the companion; changing the callback to a plain HTTP LAN address will not work.</p><a href="https://developer.spotify.com/documentation/web-api/concepts/redirect_uri" target="_blank" rel="noopener noreferrer">Spotify callback requirements</a></details>
+</section>
+</main>
 <script>
 const byId=id=>document.getElementById(id);
+function lock(){byId('book_controls').disabled=true;byId('music_controls').disabled=true;byId('list').replaceChildren();byId('reading').textContent='';byId('preview').textContent='';byId('preview_box').hidden=true;byId('music').textContent='Not checked yet.';byId('spotify_setup').textContent='Connect the companion above to check Spotify setup.'}
 async function api(path,body,raw=false){
  const token=byId('token').value.trim();if(!token)throw Error('Enter your companion access token first.');
- const response=await fetch(path,{method:body===undefined?'GET':'POST',headers:{Authorization:'Bearer '+token,...(raw?{}:{'Content-Type':'application/json'})},body:body===undefined?undefined:raw?body:JSON.stringify(body)});
- const result=await response.json();if(!response.ok)throw Error(result.error||'Request failed');return result;
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000);
+ try{
+  const response=await fetch(path,{method:body===undefined?'GET':'POST',signal:controller.signal,headers:{Authorization:'Bearer '+token,...(raw?{}:{'Content-Type':'application/json'})},body:body===undefined?undefined:raw?body:JSON.stringify(body)});
+  if(response.status===401){lock();throw Error('Access token not accepted. Copy the companion service token and reconnect.');}
+  const result=await response.json();if(!response.ok)throw Error(result.error||'Request failed. Try again.');return result;
+ }catch(error){if(error.name==='AbortError')throw Error('The companion took too long. Check it is awake, then retry.');if(error instanceof TypeError)throw Error('Cannot reach the companion. Check Wi-Fi and that the computer is awake.');throw error;}finally{clearTimeout(timer)}
 }
-async function run(button,work){button.disabled=true;byId('status').textContent='Working…';try{await work();byId('status').textContent='Done.'}catch(error){byId('status').textContent=error.message}finally{button.disabled=false}}
+let busy=false;
+async function run(button,work){if(busy)return;busy=true;button.disabled=true;byId('token').disabled=true;byId('status').textContent='Working…';try{const message=await work();byId('status').textContent=message||'Updated.'}catch(error){byId('status').textContent=error.message}finally{button.disabled=false;byId('token').disabled=false;busy=false}}
 async function music(){const s=await api('/v1/spotify');byId('music').textContent=[s.state,s.title,s.artist,s.device].filter(Boolean).join(' · ')}
-async function books(){const data=await api('/v1/library');byId('list').replaceChildren();for(const book of data.books){const li=document.createElement('li');li.textContent=book.title;byId('list').append(li)}if(!data.books.length)byId('list').textContent='Your bookshelf is empty. Add a book above.'}
+function reader(view){byId('reading').textContent=view.state==='reading'?view.title+' · Page '+(view.page+1)+' of '+view.pages+'. Open Books on Passport to continue.':'';byId('preview').textContent=view.text||'';byId('preview_box').hidden=view.state!=='reading'}
+async function books(){const data=await api('/v1/library');byId('list').replaceChildren();for(const book of data.books){const li=document.createElement('li'),title=document.createElement('span'),button=document.createElement('button');title.textContent=book.title;button.textContent='Read on Passport';button.setAttribute('aria-label','Read '+book.title+' on Passport');button.onclick=()=>run(button,async()=>{reader(await api('/v1/reader/control',{action:'select',id:book.id}));return 'Book selected. Open Books on Passport.'});li.append(title,button);byId('list').append(li)}if(!data.books.length)byId('list').textContent='No books yet. Choose a file above and tap Add book.';reader(await api('/v1/reader'))}
+byId('token').oninput=()=>{lock();byId('status').textContent='Tap Connect companion to check this token.'};
+byId('connect').onclick=()=>run(byId('connect'),async()=>{
+ const setup=await api('/v1/setup');await books();byId('book_controls').disabled=false;byId('music_controls').disabled=false;
+ const s=setup.spotify,local=['127.0.0.1','[::1]'].includes(location.hostname),canLogin=s.configured&&s.callback_valid&&(!s.computer_sign_in||local);
+ byId('login').disabled=!canLogin;
+ byId('spotify_setup').textContent=!s.configured?'First-time setup needed: configure the Spotify client ID on the companion.':!s.callback_valid?'Update the Spotify callback to HTTPS or a computer loopback IP.':s.connected?'Spotify is linked. Start a song on your phone and check playback.':!canLogin?'Sign in once on the companion computer at http://127.0.0.1:4188/tools, then return here.':'Ready to connect your Spotify account.';
+ return 'Companion connected. Add a book or choose one below.';
+});
 byId('login').onclick=()=>run(byId('login'),async()=>{const s=await api('/v1/spotify/login',{});location.assign(s.url)});
 byId('refresh').onclick=()=>run(byId('refresh'),music);
 byId('books').onclick=()=>run(byId('books'),books);
 for(const button of document.querySelectorAll('[data-action]'))button.onclick=()=>run(button,async()=>{await api('/v1/spotify/control',{action:button.dataset.action});await music()});
-byId('upload').onclick=()=>run(byId('upload'),async()=>{const file=byId('file').files[0];if(!file)throw Error('Choose a book first.');if(file.size>4194304)throw Error('Choose a book smaller than 4 MB.');await api('/v1/library/import?name='+encodeURIComponent(file.name),file,true);await books()});
-</script></html>
+byId('upload').onclick=()=>run(byId('upload'),async()=>{const file=byId('file').files[0];if(!file)throw Error('Choose a book first.');if(!/\.(txt|epub)$/i.test(file.name))throw Error('Choose a TXT or EPUB file.');if(!file.size||file.size>4194304)throw Error('Choose a non-empty book up to 4 MB.');await api('/v1/library/import?name='+encodeURIComponent(file.name),file,true);await books();byId('file').value='';return 'Book added. Tap Read on Passport beside its title.'});
+</script>
+</html>

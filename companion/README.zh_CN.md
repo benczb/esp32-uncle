@@ -195,3 +195,24 @@ Spotify 需要 `SPOTIFY_CLIENT_ID`、已登记的回调地址（默认
 限制、保存路径、设备操作及待完成的实时测试见
 [导航、Spotify 和阅读](../docs/applications/pocket-passport.zh_CN.md#导航spotify-和阅读)。
 Spotify 控制和书籍翻页需要持续连接伴侣服务。Komoot 导航通过手机直接 BLE 连接设备。
+
+### 简单的手机设置
+
+1. 保持电脑桥接服务运行。手机与 Passport 连接同一个家庭 Wi-Fi，桥接服务监听电脑局域网地址。
+2. 从 Passport 手机设置页打开 **Spotify / Books setup**。在 `/tools` 输入原有服务令牌，点击 **Connect companion**。
+3. 选择 TXT/EPUB，点击 **Add book**，然后点击书名旁的 **Read on Passport**。
+   在 Passport 打开 **Books**，即可从所选图书的已保存页码继续阅读。
+
+页面会检查身份验证、说明连接故障并预览当前页面。图书与 Spotify 仍需要设备直接访问电脑桥接服务；
+Android 浏览器中继不转发这些接口。它们并非只需手机的独立服务。导航通过 Komoot BLE 直连，不需要电脑。
+
+使用 Spotify 默认回环回调地址时，先在电脑浏览器完成一次登录，再通过手机或设备控制音乐。
+启动桥接服务时同时监听 `127.0.0.1` 和局域网地址（重复使用 `--bind`），以接收回调。
+手机登录需要已注册、可到达桥接服务的 HTTPS 回调；普通 HTTP 局域网回调不符合
+[Spotify 回调规则](https://developer.spotify.com/documentation/web-api/concepts/redirect_uri)。
+当回调要求使用电脑时，手机页面会禁用登录按钮。
+
+数据接口需要 `Authorization: Bearer <bridge-token>`；静态 `/tools` 页面与经过 state 校验的 Spotify 回调除外。
+`GET /v1/setup` 返回需要身份验证的 Spotify 设置状态，不含凭据。
+`POST /v1/reader/control` 新增 `select` 操作，并通过书架中的 `id` 选择具体图书；
+原有 `previous`、`next`、`open`、`size`、`shelf` 操作保持兼容。

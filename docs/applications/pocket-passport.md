@@ -268,7 +268,7 @@ backpressure and playback-generation checks. An eight-second missed heartbeat
 stops device playback. **Stop relay** restores direct bridge mode. Muse remains
 a separate official Bluetooth integration, not an HTTP/local-model assistant.
 
-The application directory wraps: Up from item 1 selects item 8, and Down from item 8 selects item 1.
+The application directory wraps: Up from the first item selects Settings, and Down from Settings selects the first item. Settings always stays last.
 
 ## Private Wi-Fi profiles and backups
 

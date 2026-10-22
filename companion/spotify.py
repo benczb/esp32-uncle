@@ -2,6 +2,7 @@
 import base64
 import hashlib
 import json
+import ipaddress
 import os
 from pathlib import Path
 import secrets
@@ -27,8 +28,19 @@ class Spotify:
         try: self.tokens = json.loads((self.root/'spotify.json').read_text())
         except (OSError, ValueError): self.tokens = {}
 
+    def setup(self):
+        url = urllib.parse.urlsplit(self.redirect)
+        try: loopback = ipaddress.ip_address(url.hostname or '').is_loopback
+        except ValueError: loopback = False
+        valid = bool(url.hostname and not url.username and not url.password and not url.fragment
+                     and (url.scheme == 'https' or (url.scheme == 'http' and loopback)))
+        return {'configured': bool(self.client), 'callback_valid': valid,
+                'computer_sign_in': loopback, 'connected': bool(self.tokens.get('refresh_token'))}
+
     def login(self):
         if not self.client: raise ValueError('Set SPOTIFY_CLIENT_ID on the companion')
+        if not self.setup()['callback_valid']:
+            raise ValueError('Spotify callback must use HTTPS, or a loopback IP on the companion computer')
         with self.lock:
             state = secrets.token_urlsafe(32); verifier = secrets.token_urlsafe(64)
             self.pending = (state, verifier, time.monotonic()+600)

@@ -13,7 +13,7 @@ import urllib.request
 import urllib.error
 import urllib.parse
 import zipfile
-from library import Library, convert
+from library import Library, Text, convert
 from spotify import Spotify
 import server
 
@@ -63,6 +63,54 @@ class Features(unittest.TestCase):
             spotify.login(); spotify.pending = (*spotify.pending[:2], 0)
             with self.assertRaises(ValueError): spotify.callback(spotify.pending[0], 'code')
 
+    def test_phone_selects_exact_book_and_resumes_position(self):
+        with tempfile.TemporaryDirectory() as root:
+            lib = Library(root)
+            first = lib.add('A.txt', b'First book. ' * 100)
+            second = lib.add('B.txt', b'Second book. ' * 100)
+            self.assertEqual(lib.select(second['id'])['id'], second['id'])
+            lib.control('next'); lib.control('next')
+            lib.select(first['id'])
+            view = lib.select(second['id'])
+            self.assertEqual(view['page'], 2)
+            self.assertEqual(view['state'], 'reading')
+            self.assertEqual(lib.select(second['id'])['state'], 'reading')
+            for invalid in ('../../outside', '', None, ['bad']):
+                with self.assertRaises(ValueError): lib.select(invalid)
+            self.assertEqual(Library(root).select(second['id'])['page'], 2)
+
+    def test_epub_repeated_spine_is_bounded(self):
+        repeated = io.BytesIO()
+        with zipfile.ZipFile(io.BytesIO(epub())) as original, zipfile.ZipFile(repeated, 'w') as output:
+            for name in original.namelist():
+                data = original.read(name)
+                if name.endswith('.opf'):
+                    data = data.replace(b'<itemref idref="b"/>', b'<itemref idref="b"/>' * 20)
+                output.writestr(name, data)
+        with patch('library.MAX_TEXT', 100), patch('library.Text', wraps=Text) as parser:
+            with self.assertRaisesRegex(ValueError, 'Book text too large'):
+                convert('book.epub', repeated.getvalue())
+            self.assertLess(parser.call_count, 20)  # Stop parsing before allocation grows further.
+
+    def test_spotify_setup_checks_callback_without_exposing_tokens(self):
+        with tempfile.TemporaryDirectory() as root, patch.dict(os.environ, {'SPOTIFY_CLIENT_ID': 'test-client'}):
+            spotify = Spotify(root)
+            spotify.tokens = {'refresh_token': 'private-fixture'}
+            for uri, valid, computer in (
+                    ('http://127.0.0.1:4188/spotify/callback', True, True),
+                    ('http://[::1]:4188/spotify/callback', True, True),
+                    ('https://companion.example/spotify/callback', True, False),
+                    ('http://192.168.1.2:4188/spotify/callback', False, False),
+                    ('http://localhost:4188/spotify/callback', False, False),
+                    ('https://user:pass@companion.example/callback', False, False)):
+                spotify.redirect = uri
+                setup = spotify.setup()
+                self.assertEqual(setup['callback_valid'], valid)
+                self.assertEqual(setup['computer_sign_in'], computer)
+                self.assertNotIn('private-fixture', json.dumps(setup))
+                if not valid:
+                    with self.assertRaises(ValueError): spotify.login()
+
     def test_spotify_controls_and_cache(self):
         with tempfile.TemporaryDirectory() as root:
             spotify = Spotify(root)
@@ -86,13 +134,18 @@ class Features(unittest.TestCase):
                 with urllib.request.urlopen(req) as response: return json.load(response)
             try:
                 with patch.object(server,'features',return_value=(library,spotify)):
-                    for path in ['/v1/library','/v1/reader','/v1/spotify']:
+                    for path in ['/v1/library','/v1/reader','/v1/spotify','/v1/setup']:
                         with self.assertRaises(urllib.error.HTTPError) as failure: request(path, auth=False)
                         self.assertEqual(failure.exception.code,401)
-                    request('/v1/library/import?name=book.txt', b'Hello from a real HTTP upload')
+                    added = request('/v1/library/import?name=book.txt', b'Hello from a real HTTP upload')
+                    self.assertIn('spotify', request('/v1/setup'))
                     self.assertEqual(len(request('/v1/library')['books']),1)
                     self.assertEqual(request('/v1/reader/control',b'{"action":"open"}')['state'],'reading')
                     self.assertIn('Hello',request('/v1/reader')['text'])
+                    self.assertEqual(request('/v1/reader/control', json.dumps({'action':'select','id':added['id']}).encode())['id'], added['id'])
+                    with self.assertRaises(urllib.error.HTTPError) as failure:
+                        request('/v1/reader/control', b'{"action":"select","id":"../../outside"}')
+                    self.assertEqual(failure.exception.code,400)
                     with self.assertRaises(urllib.error.HTTPError) as failure: request('/v1/reader/control',b'{"action":"invalid"}')
                     self.assertEqual(failure.exception.code,400)
                     with self.assertRaises(urllib.error.HTTPError): request('/spotify/callback?state=wrong&code=code',auth=False)

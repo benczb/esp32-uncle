@@ -96,3 +96,33 @@ New owner image SHA-256:
 `13ce868772aa3206020304ca5e03d0a9a51b3a03d4e487cbf1ac7c49d9bc76cf`.
 Matching ELF SHA-256:
 `34815c19d3becf0deb852698fe2b1c821ccd41836b3d4cda7fe041252b71f0d8`.
+
+## Phone setup and repository audit
+
+The companion phone page now provides Komoot connection steps, a token check,
+authenticated Spotify setup diagnostics, direct book selection, a current-page
+preview and actionable errors. Selecting a book resumes its saved position and
+is idempotent. Invalid IDs cannot become filesystem paths. EPUB conversion now
+bounds cumulative chapter text before joining it, including repeated spine items.
+The Spotify setup check rejects unsupported callbacks and prevents the phone UI
+from starting a computer-only loopback login.
+
+Readiness remains limited: the Komoot reference is deprecated and tested only on
+iOS; current Android/iPhone app support needs a live test. Ebook page changes
+require a reachable companion computer, and the phone relay does not forward
+books or Spotify. This increment does not add offline storage or a phone app.
+See [phone setup](../../companion/README.md#simple-phone-setup).
+
+Build: PASS — complete gate, ESP-IDF 5.5.3 default configuration (Muse off).
+Host tests: PASS — repository-wide gate and eight feature tests. Chromium with
+a mobile viewport passed authentication failure/retry, setup diagnostics, TXT
+upload, exact book selection, preview and credential clearing; layouts at
+320/390/768/1280 px had no horizontal overflow or JavaScript errors.
+Device tests: NOT RUN for this audit. Live Komoot, Spotify authorization and
+physical reading/network coexistence remain unverified. No new firmware code
+was changed and no device was flashed. Restart the companion to load the changes.
+
+The gate's local verification archive is `build/firmware/ac4d79de44d2fe19a31ab277eec8076e892876669511cb28238b5c9a340b9c9f/`;
+full image SHA-256 `ac4d79de44d2fe19a31ab277eec8076e892876669511cb28238b5c9a340b9c9f`,
+matching ELF SHA-256 `b83e4a6cb584d6e1ba06e091462a02b58403f055f1515e3be2207852cccabd0b`.
+This default test build does not replace the prepared Muse-enabled owner image.

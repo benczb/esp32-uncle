@@ -229,6 +229,8 @@ class Handler(BaseHTTPRequestHandler):
         url = urllib.parse.urlsplit(self.path)
         query = urllib.parse.parse_qs(url.query)
         try:
+            if url.path == '/v1/setup':
+                return self.send_json({'spotify': features()[1].setup()})
             if url.path == '/v1/spotify':
                 return self.send_json(features()[1].status())
             if url.path == '/v1/library':
@@ -322,6 +324,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not isinstance(body, dict): raise ValueError('Invalid request')
                 if url.path == '/v1/spotify/login': return self.send_json(spotify.login())
                 if url.path == '/v1/spotify/control': return self.send_json(spotify.control(body.get('action')))
+                if body.get('action') == 'select': return self.send_json(library.select(body.get('id')))
                 return self.send_json(library.control(body.get('action')))
             except ValueError as error:
                 return self.send_json({'error': str(error)[:160]}, 400)

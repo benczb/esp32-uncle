@@ -27,7 +27,7 @@ Internet. The LAN hop is HTTP and carries its bearer token; use a trusted Wi-Fi.
 
 ## API
 
-Every route requires `Authorization: Bearer <bridge-token>`.
+Data routes require `Authorization: Bearer <bridge-token>`. The static `/tools` page and state-validated Spotify callback are the exceptions.
 
 | Route | Purpose |
 | --- | --- |
@@ -215,10 +215,33 @@ Authenticated routes: `GET /v1/spotify`, `POST /v1/spotify/login`,
 `POST /v1/spotify/control` (`previous`, `next`, `toggle`);
 `GET /v1/library`, `POST /v1/library/import?name=book.epub` (raw file bytes),
 `GET /v1/reader`, `POST /v1/reader/control` (`previous`, `next`, `open`, `size`,
-`shelf`). Control bodies are JSON objects with an `action` field. Only `/tools`
+`shelf`, or `select` with a bookshelf `id`). `GET /v1/setup` returns authenticated
+Spotify setup flags without credentials. Control bodies are JSON objects with an `action` field. Only `/tools`
 and the state-validated `/spotify/callback` bypass bearer authentication.
 
 Limits, persistent data location, device controls and remaining live tests are
 in [Navigation, Spotify and books](../docs/applications/pocket-passport.md#navigation-spotify-and-books).
 The companion must remain reachable for Spotify controls and book page changes.
 Komoot navigation is a direct phone-to-Passport BLE connection.
+
+### Simple phone setup
+
+1. Keep the companion computer on. Connect the phone and Passport to the same
+   home Wi-Fi, with the companion listening on its LAN address.
+2. Open **Spotify / Books setup** from Passport's phone settings. On `/tools`,
+   enter the existing service token and tap **Connect companion**.
+3. Choose a TXT/EPUB, tap **Add book**, then **Read on Passport** beside its title.
+   Open **Books** on Passport. The selected book resumes its saved page.
+
+The page checks authentication, explains connection failures and previews the
+current page. Books and Spotify still require direct device-to-companion access;
+the Android browser relay does not forward these routes. They are not standalone
+phone-only services. Navigation uses direct Komoot BLE and needs no companion.
+
+With Spotify's default loopback callback, complete sign-in once on the companion
+computer, then control music from your phone/device. Bind the companion to
+`127.0.0.1` as well as the LAN address for that callback (repeat `--bind`).
+Phone sign-in requires a registered HTTPS callback that reaches the companion;
+a plain HTTP LAN callback is rejected under
+[Spotify's callback rules](https://developer.spotify.com/documentation/web-api/concepts/redirect_uri).
+The phone page disables sign-in when the callback requires the computer.
