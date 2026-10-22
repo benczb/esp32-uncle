@@ -38,17 +38,27 @@ limits and account setup.
 | Companion HTTP authentication, upload, reading persistence and PKCE tests | PASS |
 | Companion JavaScript syntax | PASS |
 | Interactive browser setup | NOT RUN — browser unavailable |
-| Flash | BLOCKED — serial device detected but this session lacks permission |
+| Flash | PASS — approved owner image written and hash-verified |
+| USB startup diagnostics | PASS — three status replies across a 15-second observation, no panic/watchdog/assertion markers |
 | Physical device and live phone/account behavior | NOT RUN |
 
 The verified owner image SHA-256 is
 `235bd4ab13ed3244777865e41205993c65cb421d1ec436d45d91c18f7404bd9e`.
 Its matching ELF SHA-256 is
 `eb465980c2551f9cd010f06b281905bcafaa3a23db69e1a127f290014dbcfc09`.
-The image fits the existing application partition. Flashing needs serial access;
-no full-chip erase is required. A merged flash can reset stored settings.
+The image fits the existing application partition. After the owner granted serial
+access, it was flashed at `0x0`; esptool verified the written data and reset the
+device. The write ends at `0x29a30f` (erased sectors end at `0x29afff`), below
+the identity reserve at `0x350000`. No full-chip erase was performed. A merged
+flash can reset stored settings.
 
-Pending physical checks: stable startup, the three directory entries and button
+The device replied on Home, transitioned into its screensaver, and reported
+approximately 60 KB free heap with a 51,200-byte largest free block. The captured
+window contained one boot marker and no panic, assertion, watchdog, stack-canary
+or brownout marker. Wi-Fi was not connected during this short observation.
+Raw serial output is kept only in the ignored local device-test folder.
+
+Pending physical checks: longer-term startup stability, the three directory entries and button
 controls, current Komoot app compatibility, real Spotify authorization/playback,
 book page changes, and Wi-Fi/BLE/voice memory coexistence. Flash success alone
 will not establish that these checks pass.

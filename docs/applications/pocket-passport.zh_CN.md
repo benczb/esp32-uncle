@@ -398,8 +398,10 @@ Spotify 令牌也以私有权限保存在该目录。备份该文件夹可保留
 继续用户配置时运行 `idf.py -B build/all-three -D SDKCONFIG=build/all-three/sdkconfig build`；
 该配置启用 Muse、导航、central/observer 角色和两个 BLE 连接。
 
-设备测试：未运行，未发现可用串口。待验证当前 Komoot 手机配对与路线动作、Spotify 登录
-和真实播放器控制、设备上的导入和翻页，以及 Wi-Fi/BLE/语音内存共存。
-没有烧录、提交、推送或代用户授权账号。
+设备交接：已从 `0x0` 烧录获批用户镜像并验证写入数据。15 秒启动观察期间获得三次
+USB 状态响应，显示首页和息屏状态，无崩溃、断言或看门狗标记。该观察期间 Wi-Fi
+尚未连接。实体屏幕与按键、Komoot 配对与路线动作、Spotify 授权和播放器控制、书籍
+翻页及 Wi-Fi/BLE/语音内存共存仍待验证。原始日志仅本地保留。源码和双语说明已发布
+到 `feature/navigation-spotify-books`，不包含私人配置、运行数据和固件。
 
 [功能交付说明](navigation-spotify-books-notes.zh_CN.md)

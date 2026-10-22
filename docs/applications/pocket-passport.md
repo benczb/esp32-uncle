@@ -503,9 +503,13 @@ archive remains separate and has optional Muse disabled. Continue the owner
 configuration with `idf.py -B build/all-three -D SDKCONFIG=build/all-three/sdkconfig build`;
 it enables Muse, navigation, central/observer roles and two BLE connections.
 
-Device tests: NOT RUN; no compatible serial port was visible. Pending: current
-Komoot phone pairing and maneuvers, Spotify login and real player controls,
-book import/page turning on the device, and Wi-Fi/BLE/voice memory coexistence.
-No flash, commit, push or account authorization was performed.
+Device handoff: the approved owner image was flashed at `0x0` and its written
+data verified. Three USB status replies across a 15-second startup observation
+showed Home and screensaver operation, with no panic/assertion/watchdog markers.
+Wi-Fi was not connected during that observation. Physical screen/button checks,
+Komoot pairing and maneuvers, Spotify authorization/player controls, book page
+changes, and Wi-Fi/BLE/voice memory coexistence remain unverified. Raw logs stay
+local. Source and paired notes are published on `feature/navigation-spotify-books`;
+private defaults, runtime data and firmware are excluded.
 
 [Feature delivery note](navigation-spotify-books-notes.md)
