@@ -18,6 +18,42 @@
     "native": true
   },
   {
+    "id": "usage",
+    "language": "en",
+    "title": "Codex balance · demo",
+    "description": "Sample remaining limits; no real account data.",
+    "time": 12.5,
+    "image": "en-usage.png",
+    "native": true
+  },
+  {
+    "id": "profile",
+    "language": "en",
+    "title": "Profile card",
+    "description": "Your illustrated portrait, with contact details hidden.",
+    "time": 13.5,
+    "image": "en-profile.png",
+    "native": true
+  },
+  {
+    "id": "linkedin",
+    "language": "en",
+    "title": "LinkedIn QR",
+    "description": "Scan to open Ben Cheng’s public LinkedIn profile.",
+    "time": 14.5,
+    "image": "en-linkedin.png",
+    "native": true
+  },
+  {
+    "id": "nfc",
+    "language": "en",
+    "title": "NFC profile",
+    "description": "A tap opens the same public profile.",
+    "time": 15.5,
+    "image": "en-nfc.png",
+    "native": true
+  },
+  {
     "id": "bus",
     "language": "en",
     "title": "Bus arrivals",
@@ -105,42 +141,6 @@
     "description": "A private connection, without device identifiers.",
     "time": 11.5,
     "image": "en-muse.png",
-    "native": true
-  },
-  {
-    "id": "usage",
-    "language": "en",
-    "title": "Account overview",
-    "description": "Account information stays private.",
-    "time": 12.5,
-    "image": "en-usage.png",
-    "native": true
-  },
-  {
-    "id": "profile",
-    "language": "en",
-    "title": "Profile card",
-    "description": "Your illustrated portrait, with contact details hidden.",
-    "time": 13.5,
-    "image": "en-profile.png",
-    "native": true
-  },
-  {
-    "id": "linkedin",
-    "language": "en",
-    "title": "LinkedIn QR",
-    "description": "Scan to open Ben Cheng’s public LinkedIn profile.",
-    "time": 14.5,
-    "image": "en-linkedin.png",
-    "native": true
-  },
-  {
-    "id": "nfc",
-    "language": "en",
-    "title": "NFC profile",
-    "description": "A tap opens the same public profile.",
-    "time": 15.5,
-    "image": "en-nfc.png",
     "native": true
   },
   {
@@ -234,6 +234,42 @@
     "native": true
   },
   {
+    "id": "usage",
+    "language": "zh",
+    "title": "Codex 额度 · 演示",
+    "description": "剩余额度示例，不含真实账号数据。",
+    "time": 36.5,
+    "image": "zh-usage.png",
+    "native": true
+  },
+  {
+    "id": "profile",
+    "language": "zh",
+    "title": "个人名片",
+    "description": "你的插画头像，联系资料保持隐藏。",
+    "time": 37.5,
+    "image": "zh-profile.png",
+    "native": true
+  },
+  {
+    "id": "linkedin",
+    "language": "zh",
+    "title": "领英二维码",
+    "description": "扫码打开 Ben Cheng 的公开领英主页。",
+    "time": 38.5,
+    "image": "zh-linkedin.png",
+    "native": true
+  },
+  {
+    "id": "nfc",
+    "language": "zh",
+    "title": "近场名片",
+    "description": "碰一碰打开同一个公开主页。",
+    "time": 39.5,
+    "image": "zh-nfc.png",
+    "native": true
+  },
+  {
     "id": "bus",
     "language": "zh",
     "title": "巴士到站",
@@ -321,42 +357,6 @@
     "description": "保护隐私的连接，不展示设备标识。",
     "time": 35.5,
     "image": "zh-muse.png",
-    "native": true
-  },
-  {
-    "id": "usage",
-    "language": "zh",
-    "title": "账号概览",
-    "description": "账号信息保持私有。",
-    "time": 36.5,
-    "image": "zh-usage.png",
-    "native": true
-  },
-  {
-    "id": "profile",
-    "language": "zh",
-    "title": "个人名片",
-    "description": "你的插画头像，联系资料保持隐藏。",
-    "time": 37.5,
-    "image": "zh-profile.png",
-    "native": true
-  },
-  {
-    "id": "linkedin",
-    "language": "zh",
-    "title": "领英二维码",
-    "description": "扫码打开 Ben Cheng 的公开领英主页。",
-    "time": 38.5,
-    "image": "zh-linkedin.png",
-    "native": true
-  },
-  {
-    "id": "nfc",
-    "language": "zh",
-    "title": "近场名片",
-    "description": "碰一碰打开同一个公开主页。",
-    "time": 39.5,
-    "image": "zh-nfc.png",
     "native": true
   },
   {
