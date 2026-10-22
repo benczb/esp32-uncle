@@ -176,3 +176,22 @@ OpenAI 登录连接 ChatGPT 账号以读取 Codex 配额窗口及重置时间，
 接口：`GET/POST /v1/accounts`、`GET /v1/accounts/<id>/status`、`POST /v1/accounts/<id>/login` 和 `/cancel`。创建账号时向配置的追踪器注册独立目录；登录使用官方 [Codex app-server 设备码流程](https://learn.chatgpt.com/docs/app-server) 或 [Claude 官方登录流程](https://code.claude.com/docs/en/authentication)。
 
 如果桥接服务可访问但 AI 用量读取失败，请另行检查用量跟踪器地址。`ATHENA_URL` 必须与跟踪器实际监听地址一致，默认是 `http://127.0.0.1:4177`。私有启动器在未设置 `ATHENA_URL` 时，也会读取可选的 `companion/.local/usage-url` 本地地址文件；明确设置的环境变量优先。该文件仅保存在本机，并由 Git 忽略。
+
+## Spotify 与书架
+
+在伴侣服务打开 `/tools`，连接 Spotify 或上传 UTF-8 TXT、无 DRM 的 EPUB。
+页面要求输入现有桥接令牌，不将其存入浏览器存储。
+Spotify 需要 `SPOTIFY_CLIENT_ID`、已登记的回调地址（默认
+`http://127.0.0.1:4188/spotify/callback`）、Premium 和活动播放器。
+`SPOTIFY_REDIRECT_URI` 可修改回调地址；令牌仅保留在伴侣电脑。
+
+已认证接口：`GET /v1/spotify`、`POST /v1/spotify/login`、
+`POST /v1/spotify/control`（`previous`、`next`、`toggle`）；
+`GET /v1/library`、`POST /v1/library/import?name=book.epub`（文件原始字节）、
+`GET /v1/reader`、`POST /v1/reader/control`（`previous`、`next`、`open`、`size`、
+`shelf`）。控制请求为带 `action` 字段的 JSON 对象。
+只有 `/tools` 和通过 state 验证的 `/spotify/callback` 不需要 bearer 认证。
+
+限制、保存路径、设备操作及待完成的实时测试见
+[导航、Spotify 和阅读](../docs/applications/pocket-passport.zh_CN.md#导航spotify-和阅读)。
+Spotify 控制和书籍翻页需要持续连接伴侣服务。Komoot 导航通过手机直接 BLE 连接设备。

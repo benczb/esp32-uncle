@@ -1,4 +1,6 @@
 #include "passport_app.h"
+#include "passport_features.h"
+#include "passport_navigation.h"
 #include "passport_muse.h"
 #include "passport_muse_voice.h"
 #include "passport_i18n.h"
@@ -47,8 +49,8 @@ static void usb_test_poll(const passport_model_t *model){
   line[length]=0;int command=overflow?-1:passport_test_command(line);length=0;overflow=false;
   if(command==0){
    xSemaphoreTake(passport_mutex,portMAX_DELAY);
-   printf("PASSPORT_TEST {\"page\":%u,\"selected\":%u,\"theme\":%u,\"brightness\":%u,\"wifi\":%d,\"wifi_profile\":%u,\"photo_saved\":%d,\"photo_bytes\":%u,\"weather_valid\":%d,\"psi\":%d,\"bus_rows\":%u,\"train_known\":%d,\"train_stale\":%d,\"train_items\":%u,\"train_bytes\":%u,\"weather_bytes\":%u,\"usage_bytes\":%u,\"hermes_bytes\":%u,\"audio\":%d,\"audio_worker\":%d,\"settings_web\":%d,\"pcm_bytes\":%u,\"volume\":%u,\"function\":%u,\"network_busy\":%d,\"voice_phase\":%u,\"voice_bytes\":%u,\"voice_peak\":%u,\"heap\":%u,\"largest\":%u}\n",
-    (unsigned)model->page,model->selected,passport_config.theme,passport_brightness_get(),passport_connected,passport_wifi_profile_current(),passport_has_avatar,(unsigned)passport_avatar_allocation,(passport_weather[0]>='0'&&passport_weather[0]<='9')||(passport_weather[0]=='-'&&passport_weather[1]>='0'&&passport_weather[1]<='9'),passport_psi_value,passport_bus_rows,passport_train_known,passport_train_stale,passport_train_alerts,(unsigned)(passport_train_text?strlen(passport_train_text):0),
+   printf("PASSPORT_TEST {\"page\":%u,\"selected\":%u,\"theme\":%u,\"brightness\":%u,\"screen_awake\":%d,\"wifi\":%d,\"wifi_profile\":%u,\"photo_saved\":%d,\"photo_bytes\":%u,\"weather_valid\":%d,\"psi\":%d,\"bus_rows\":%u,\"train_known\":%d,\"train_stale\":%d,\"train_items\":%u,\"train_bytes\":%u,\"weather_bytes\":%u,\"usage_bytes\":%u,\"hermes_bytes\":%u,\"audio\":%d,\"audio_worker\":%d,\"settings_web\":%d,\"pcm_bytes\":%u,\"volume\":%u,\"function\":%u,\"network_busy\":%d,\"voice_phase\":%u,\"voice_bytes\":%u,\"voice_peak\":%u,\"heap\":%u,\"largest\":%u}\n",
+    (unsigned)model->page,model->selected,passport_config.theme,passport_brightness_get(),passport_screen_awake(),passport_connected,passport_wifi_profile_current(),passport_has_avatar,(unsigned)passport_avatar_allocation,(passport_weather[0]>='0'&&passport_weather[0]<='9')||(passport_weather[0]=='-'&&passport_weather[1]>='0'&&passport_weather[1]<='9'),passport_psi_value,passport_bus_rows,passport_train_known,passport_train_stale,passport_train_alerts,(unsigned)(passport_train_text?strlen(passport_train_text):0),
     (unsigned)strlen(passport_weather),(unsigned)strlen(passport_athena),(unsigned)(passport_reply_peek(0)?strlen(passport_reply_peek(0)):0),
     passport_audio_is_playing(),passport_audio_worker_active(),passport_settings_web_active(),passport_audio_bytes_written(),passport_audio_volume_percent(),passport_function_active(),!passport_network_idle(),passport_voice_phase(),passport_voice_bytes(),passport_voice_peak(),(unsigned)heap_caps_get_free_size(MALLOC_CAP_8BIT),(unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
    xSemaphoreGive(passport_mutex);
@@ -93,7 +95,9 @@ void app_main(void) {
  passport_screensaver_t saver;passport_screensaver_init(&saver,esp_timer_get_time());
  int64_t wake_ignore_until=0;
  for(;;) {
-  if(!saver.asleep)passport_background_poll();
+  /* Maintain audio, Wi-Fi and relay lifecycles while the backlight is off.
+   * Individual data-fetch entry points gate work on screen_awake. */
+  passport_background_poll();
 #if PASSPORT_PRIVATE_USB_TEST_CONTROL
   if(usb_test_ready)usb_test_poll(&model);
 #endif
@@ -112,6 +116,16 @@ void app_main(void) {
     changed=true;
    }else if(esp_timer_get_time()<wake_ignore_until){
     /* Follow-on event of the press that woke the display; swallow it. */
+   }else if(model.page==PAGE_SPOTIFY && (input.event==BSP_BTN_CLICK || (input.event==BSP_BTN_LONG && input.key!=BSP_BTN_OK))){
+    if(!passport_feature_key(PAGE_SPOTIFY,input.key))ESP_LOGW("passport","Spotify request queue busy");
+    changed=true;
+   }else if(model.page==PAGE_READER && (input.event==BSP_BTN_CLICK || (input.event==BSP_BTN_LONG && input.key!=BSP_BTN_OK))){
+    unsigned action=input.event==BSP_BTN_LONG?(input.key==BSP_BTN_UP?3:4):input.key;
+    if(!passport_feature_key(PAGE_READER,action))ESP_LOGW("passport","Reader request queue busy");
+    changed=true;
+   }else if(model.page==PAGE_NAVIGATION && input.event==BSP_BTN_CLICK){
+    if(input.key==BSP_BTN_OK)passport_navigation_toggle();
+    changed=true;
    }else if(input.event==BSP_BTN_RELEASE){
     if(input.key==BSP_BTN_DOWN)passport_voice_release();
    }else if(model.page==PAGE_MUSE && passport_muse_supported() && input.event==BSP_BTN_CLICK && input.key==BSP_BTN_OK){
@@ -166,12 +180,24 @@ void app_main(void) {
   if(model.page==PAGE_RADIO && model.playing && !passport_audio_is_playing()){model.playing=false;changed=true;}
   /* Screensaver, all pages: after the idle timeout the backlight goes off
    * and fetching/rendering below freeze until the next key press. Audio
-   * playback, a voice interaction, or an open phone setup page counts as
-   * busy and keeps the display awake. Wi-Fi is left associated in modem
+   * playback continues with the display asleep. A voice interaction or
+   * Wi-Fi setup keeps it awake; a background relay server does not.
+   * Wi-Fi is left associated in modem
    * power-save; disconnecting would cost a reconnect on every wake. */
-  bool saver_busy=(model.page==PAGE_RADIO && model.playing) || passport_audio_is_playing() ||
-   passport_voice_busy() || passport_settings_web_active();
-  if(passport_screensaver_poll(&saver,esp_timer_get_time(),saver_busy)){
+  bool saver_busy=passport_screensaver_keep_awake(model.page,passport_voice_busy(),passport_settings_web_active());
+  passport_navigation_t navigation;passport_navigation_snapshot(&navigation);
+  static bool navigation_stale;
+  if(navigation_stale!=navigation.stale){navigation_stale=navigation.stale;changed=true;}
+  if(model.page==PAGE_NAVIGATION && navigation.enabled)saver_busy=true;
+  static int64_t last_overlay;static bool overlay_visible;
+  bool overlay=navigation.enabled && navigation.valid && !navigation.stale && navigation.overlay_until_us>esp_timer_get_time();
+  if(overlay && navigation.overlay_until_us!=last_overlay){
+   last_overlay=navigation.overlay_until_us;
+   passport_screensaver_activity(&saver,esp_timer_get_time());passport_screen_awake_set(true);
+   bsp_display_backlight(passport_brightness_get());changed=true;
+  }
+  if(overlay!=overlay_visible){overlay_visible=overlay;changed=true;}
+  if(passport_screensaver_poll_timeout(&saver,esp_timer_get_time(),saver_busy,model.page==PAGE_READER?90000000LL:PASSPORT_SCREENSAVER_IDLE_US)){
    passport_screen_awake_set(false);
    bsp_display_backlight(0);
   }

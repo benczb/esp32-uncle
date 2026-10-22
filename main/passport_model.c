@@ -17,7 +17,7 @@ bool passport_relay_pcm_frame_valid(const uint8_t *frame,size_t bytes,uint32_t g
  return received==generation;
 }
 static const passport_page_t apps[] = { PAGE_BUS, PAGE_TRAIN, PAGE_ATHENA, PAGE_HERMES,
- PAGE_MUSE, PAGE_CARD, PAGE_RADIO, PAGE_WEATHER, PAGE_PREFERENCES };
+ PAGE_MUSE, PAGE_CARD, PAGE_RADIO, PAGE_WEATHER, PAGE_PREFERENCES, PAGE_NAVIGATION, PAGE_SPOTIFY, PAGE_READER };
 void passport_navigate(passport_model_t *m, unsigned key, bool hold) {
  if (key > 2) return;
  if (hold) { if(key == 2) {
@@ -92,7 +92,7 @@ bool passport_resolve_profile_password(char *out,size_t cap,const char *stored,c
 }
 
 bool passport_service_allowed(passport_page_t active,passport_page_t requested){
- if((unsigned)active>PAGE_LANGUAGE || (unsigned)requested>PAGE_LANGUAGE)return false;
+ if((unsigned)active>PAGE_READER || (unsigned)requested>PAGE_READER)return false;
  if(requested==PAGE_WEATHER)return true;
  if(requested==PAGE_APPS || requested==PAGE_CARD)return false;
  return active==requested;
@@ -108,6 +108,9 @@ bool passport_browser_relay_page(passport_page_t page){
   page==PAGE_ATHENA || page==PAGE_RADIO || page==PAGE_PREFERENCES;
 }
 bool passport_web_required(passport_page_t page,bool setup_ap,bool relay_active){
+ /* The phone is the network transport, not the selected app. Preserve its
+  * heartbeat and PCM routes across Home and every intermediate screen. */
+ if(relay_active)return true;
  if(page==PAGE_HOME)return setup_ap;
  if(page==PAGE_APPS || page==PAGE_RADIO || page==PAGE_PREFERENCES)return relay_active;
  return passport_browser_relay_page(page);
@@ -123,15 +126,21 @@ bool passport_assistant_volume_key(passport_model_t *m,unsigned key,bool hold,in
 void passport_screensaver_init(passport_screensaver_t *state,int64_t now_us){
  state->last_activity_us=now_us;state->asleep=false;
 }
+bool passport_screensaver_keep_awake(passport_page_t page,bool voice_busy,bool web_active){
+ return voice_busy || (page==PAGE_SETTINGS && web_active);
+}
 bool passport_screensaver_activity(passport_screensaver_t *state,int64_t now_us){
  bool woke=state->asleep;state->asleep=false;state->last_activity_us=now_us;return woke;
 }
 bool passport_screensaver_poll(passport_screensaver_t *state,int64_t now_us,bool busy){
+ return passport_screensaver_poll_timeout(state,now_us,busy,PASSPORT_SCREENSAVER_IDLE_US);
+}
+bool passport_screensaver_poll_timeout(passport_screensaver_t *state,int64_t now_us,bool busy,int64_t timeout_us){
  if(state->asleep || busy)return false;
  /* A clock step backwards (or a stale timestamp) restarts the countdown
   * instead of sleeping immediately. */
  if(now_us<state->last_activity_us){state->last_activity_us=now_us;return false;}
- if(now_us-state->last_activity_us<PASSPORT_SCREENSAVER_IDLE_US)return false;
+ if(now_us-state->last_activity_us<timeout_us)return false;
  state->asleep=true;return true;
 }
 

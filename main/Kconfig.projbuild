@@ -1,4 +1,12 @@
 menu "Pocket Passport"
+config PASSPORT_NAVIGATION_BLE
+    bool "Komoot turn-by-turn BLE navigation"
+    depends on BT_ENABLED && BT_NIMBLE_ENABLED && BT_NIMBLE_ROLE_CENTRAL && BT_NIMBLE_ROLE_OBSERVER
+    default y
+    help
+        Receive route instructions from the Komoot phone app. Uses the shared
+        NimBLE host when Muse is enabled. Phone compatibility needs device tests.
+
 config PASSPORT_MUSE_BLE
     bool "Enable experimental official Muse BLE pairing"
     depends on BT_ENABLED && BT_NIMBLE_ENABLED && BT_NIMBLE_NVS_PERSIST && BT_NIMBLE_SM_SC

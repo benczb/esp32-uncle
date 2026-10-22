@@ -38,9 +38,9 @@ int main(void) {
  passport_navigate(&shortcut,1,false);assert(shortcut.page==PAGE_BUS && shortcut.reply_page==0);
  passport_model_t m={0}; passport_navigate(&m,2,false); assert(m.page==PAGE_APPS);
  /* Both boundaries wrap, and each item remains selectable after wrapping. */
- passport_navigate(&m,0,false);assert(m.selected==8);
+ passport_navigate(&m,0,false);assert(m.selected==PASSPORT_APP_COUNT-1);
  passport_navigate(&m,1,false);assert(m.selected==0);
- const passport_page_t expected[]={PAGE_BUS,PAGE_TRAIN,PAGE_ATHENA,PAGE_HERMES,PAGE_MUSE,PAGE_CARD,PAGE_RADIO,PAGE_WEATHER,PAGE_PREFERENCES};
+ const passport_page_t expected[]={PAGE_BUS,PAGE_TRAIN,PAGE_ATHENA,PAGE_HERMES,PAGE_MUSE,PAGE_CARD,PAGE_RADIO,PAGE_WEATHER,PAGE_PREFERENCES,PAGE_NAVIGATION,PAGE_SPOTIFY,PAGE_READER};
  for(unsigned i=0;i<3*PASSPORT_APP_COUNT;i++){
   assert(m.selected==i%PASSPORT_APP_COUNT);
   passport_navigate(&m,2,false);assert(m.page==expected[i%PASSPORT_APP_COUNT]);
@@ -72,7 +72,7 @@ int main(void) {
  passport_navigate(&settings,2,true);assert(settings.page==PAGE_PREFERENCES);
  assert(m.selected==0);
  for(unsigned i=0;i<3*PASSPORT_APP_COUNT;i++){passport_navigate(&m,0,false);assert(m.selected==(PASSPORT_APP_COUNT-1-i%PASSPORT_APP_COUNT));}
- passport_navigate(&m,0,false);assert(m.selected==8);
+ m.selected=9;passport_navigate(&m,0,false);assert(m.selected==8);
  passport_navigate(&m,2,false);assert(m.page==PAGE_PREFERENCES);
  passport_navigate(&m,2,true); assert(m.page==PAGE_APPS);
  passport_navigate(&m,2,true); assert(m.page==PAGE_HOME);
@@ -84,6 +84,14 @@ int main(void) {
  passport_navigate(&m,2,true);assert(m.page==PAGE_APPS);
  /* Screensaver: sleeps only after the full idle timeout, never while busy,
   * and any activity wakes it and restarts the countdown. */
+ /* Audio and a background phone relay must not pin the backlight on. */
+ assert(!passport_screensaver_keep_awake(PAGE_RADIO,false,false));
+ assert(!passport_screensaver_keep_awake(PAGE_RADIO,false,true));
+ assert(!passport_screensaver_keep_awake(PAGE_ATHENA,false,true));
+ for(unsigned page=PAGE_HOME;page<=PAGE_LANGUAGE;page++)
+  assert(passport_web_required((passport_page_t)page,false,true));
+ assert(passport_screensaver_keep_awake(PAGE_SETTINGS,false,true));
+ assert(passport_screensaver_keep_awake(PAGE_RADIO,true,true));
  passport_screensaver_t saver;passport_screensaver_init(&saver,1000000);
  assert(!saver.asleep);
  assert(!passport_screensaver_poll(&saver,1000000+PASSPORT_SCREENSAVER_IDLE_US-1,false));
@@ -151,7 +159,7 @@ int main(void) {
   bool relay_page=page==PAGE_SETTINGS||page==PAGE_APPS||page==PAGE_HERMES||page==PAGE_ATHENA||page==PAGE_RADIO||page==PAGE_PREFERENCES;
   assert(passport_browser_relay_page(page)==relay_page);
   for(unsigned ap=0;ap<2;ap++)for(unsigned relay=0;relay<2;relay++){
-   bool expected=page==PAGE_SETTINGS||page==PAGE_HERMES||page==PAGE_ATHENA||
+   bool expected=relay||page==PAGE_SETTINGS||page==PAGE_HERMES||page==PAGE_ATHENA||
     (page==PAGE_HOME&&ap)||((page==PAGE_APPS||page==PAGE_RADIO||page==PAGE_PREFERENCES)&&relay);
    assert(passport_web_required(page,ap,relay)==expected);
   }

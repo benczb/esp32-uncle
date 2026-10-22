@@ -87,8 +87,14 @@ Wi-Fi is deliberately left associated in modem power-save while the display
 sleeps. Disconnecting would trade a cheap associated idle for a full
 reconnect, re-association, and TLS session on every wake, which costs more
 power than it saves at this timeout; the saving comes from not fetching.
-Radio playback, a voice interaction, and an open phone setup page count as
-busy and keep the display awake.
+Radio playback continues with the screen off, including phone-relayed audio.
+Only voice interaction and the Wi-Fi setup screen keep the display awake.
+The relay connection stays active while the Passport sleeps; optional usage
+and weather refreshes resume when it wakes. Keep the phone relay page in the
+foreground and the phone awake.
+
+The phone relay survives navigation through Home and other screens until
+stopped or its heartbeat times out.
 
 ## Computer bridge and assistant scope
 
@@ -105,7 +111,8 @@ the configured computer speech bridge. The phone-browser relay also implements
 microphone upload, cancellation and reply audio. The owner confirmed Hermes voice
 on Home Wi-Fi and through the Android hotspot/Tailscale phone relay.
 Live TV, Xiaozhi cloud voice,
-games, PM2.5 and GPS are outside this build.
+games, PM2.5 and onboard GPS are outside this build. Phone-based Komoot
+navigation is described below.
 The [TV project](https://github.com/zpdeng1020-coder/ai-passport-tv) is a reference,
 not an integrated TV feature.
 
@@ -396,3 +403,109 @@ AccountKey is attached only to the fixed HTTPS DataMall metadata endpoints.
 Signed downloads use a new handle with no key, no bearer token and no automatic
 redirect following. Download URLs must match the documented LTA S3 host and
 train-data paths; signed links and keys are never logged or stored in Git.
+
+## Navigation, Spotify and books
+
+The directory now also contains Navigation, Spotify and Books. These are part
+of Pocket Passport's own interface. All three preserve hold-OK to return to the
+menu; slow operations stay on workers rather than button callbacks.
+
+| App | Controls | Data source |
+| --- | --- | --- |
+| Navigation | OK starts/stops; hold OK leaves the screen while navigation continues | Komoot phone app over BLE |
+| Spotify | Up previous track; Down next track; OK play/pause | Authenticated computer companion |
+| Books | Up/Down choose books or turn pages; OK opens/returns to bookshelf; hold Up changes text size; hold Down opens bookshelf | TXT/EPUB converted and paginated by companion |
+
+### Komoot
+
+Open Navigation, press OK, and start a route in Komoot on the phone. The device
+scans for Komoot service `71c1e128-d92f-4fa8-a2b2-0f171db3436c`, discovers the
+navigation characteristic and notification descriptor, subscribes, and reads
+complete instructions at least every three seconds. It supports long GATT reads,
+bounded UTF-8 street names, distance, maneuver labels, arrows for basic turns,
+arrival and off-route states. Unsupported maneuvers retain their text label.
+The phone supplies GPS and routing; no extra GPS hardware is needed.
+
+Navigation continues after leaving its screen. A changed instruction shows a
+six-second overlay on other screens and wakes the display. Returning to
+Navigation and pressing OK stops the link. Its screen stays awake while enabled;
+other screens retain their normal timeout. Readings older than ten seconds are
+marked stale and do not produce a turn overlay. Disconnections trigger scanning
+and reconnection. A stopped route is shown as waiting, never as a fabricated
+arrival. Current phone/Komoot compatibility remains an on-device acceptance test.
+
+The default build enables NimBLE central/observer roles and
+`CONFIG_PASSPORT_NAVIGATION_BLE`. Startup is lazy to conserve heap. If optional
+Muse BLE is enabled, navigation shares its host instead of initializing another
+Bluetooth stack; that variant also needs central/observer roles and at least two
+connections. Wi-Fi, voice audio and simultaneous BLE links require board tests.
+
+### Spotify setup
+
+1. Configure a Spotify developer application with the exact redirect URI
+   `http://127.0.0.1:4188/spotify/callback` (or an HTTPS URI routed to this bridge).
+2. Set `SPOTIFY_CLIENT_ID` in the companion's launch environment. Optionally set
+   `SPOTIFY_REDIRECT_URI` to match the registered URI. Restart the companion with
+   those variables; no Spotify client secret is needed for PKCE.
+3. Open `http://127.0.0.1:4188/tools` on the companion computer, enter its existing
+   bridge token, then choose Connect Spotify. Complete the Spotify login and
+   return to `/tools`. A loopback callback must be opened on that same computer;
+   phone login needs a reachable HTTPS callback and a matching registered URI.
+4. Start playback in Spotify on your phone or another Spotify player, then open
+   Spotify on the Passport. Premium, developer-app access and granted playback
+   scopes are required. This is a remote; music stays on the Spotify player.
+
+The companion refreshes tokens privately and caches playback state for five
+seconds. It honors rate-limit backoff and returns connection/setup failures.
+OAuth state expires after ten minutes and is single-use. Tokens are never sent
+to the Passport or returned in status responses.
+
+### Book import and persistence
+
+Open the companion's `/tools` page, enter the bridge token and upload UTF-8 TXT
+or DRM-free EPUB (up to 4 MB, 32 books). EPUB conversion follows spine order,
+removes markup/scripts and never extracts archive paths to disk. Expanded
+archives are capped at 16 MB and 2,048 entries. PDF, DRM and embedded book images
+are not supported. Select the book on the Passport and press OK to read.
+
+The companion stores books, selected book, text size and per-book reading
+position under `~/.local/share/pocket-passport`, or `PASSPORT_DATA_DIR` when set.
+It also stores Spotify tokens there with private permissions. Back up this
+folder to retain your library and progress. Changing text size approximately
+preserves the reading location. One companion reading session serves one
+Passport. The device retains only the current text page in RAM; a full offline
+library is not implemented. A lost companion connection labels the retained
+page offline. Books use a 90-second idle timeout instead of ten seconds.
+Arbitrary characters remain subject to the existing font coverage contract;
+unsupported characters display `?`. The larger reading mode uses a 20 px Latin
+font with the existing 16 px CJK fallback; it does not enlarge CJK glyphs.
+
+Implementation acceptance: host protocol, HTTP authentication, PKCE state,
+EPUB ordering and persistence tests plus native LVGL renders. Live Komoot,
+Spotify account authorization and physical button/display behavior require the
+owner's phone and device. No account login or firmware flashing is automatic.
+
+### Implementation checkpoint — 2026-10-22
+
+Accepted scope: phone Komoot navigation, Spotify remote controls, and a companion
+TXT/EPUB bookshelf with saved position. All three are implemented. The complete
+repository gate and native LVGL layouts pass; the Muse-enabled owner variant
+also builds and passes merge/layout and archive verification. The setup page has
+HTTP tests and JavaScript syntax checks; browser interaction was unavailable.
+
+Owner delivery image SHA-256:
+`235bd4ab13ed3244777865e41205993c65cb421d1ec436d45d91c18f7404bd9e`.
+Matching ELF SHA-256:
+`eb465980c2551f9cd010f06b281905bcafaa3a23db69e1a127f290014dbcfc09`.
+The verified archive is `build/firmware/235bd4ab13ed3244777865e41205993c65cb421d1ec436d45d91c18f7404bd9e/`;
+`build/FoloToy-AI-Passport-full.bin` is the same owner image. The default gate
+archive remains separate and has optional Muse disabled. Continue the owner
+configuration with `idf.py -B build/all-three -D SDKCONFIG=build/all-three/sdkconfig build`;
+it enables Muse, navigation, central/observer roles and two BLE connections.
+
+Device tests: NOT RUN; no compatible serial port was visible. Pending: current
+Komoot phone pairing and maneuvers, Spotify login and real player controls,
+book import/page turning on the device, and Wi-Fi/BLE/voice memory coexistence.
+No flash, commit, push or account authorization was performed.
+
+[Feature delivery note](navigation-spotify-books-notes.md)

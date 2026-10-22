@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pocket Passport · Music & books</title>
+<style>
+:root{color-scheme:dark;font:16px/1.6 system-ui;background:#101821;color:#f4f7fa}body{max-width:42rem;margin:auto;padding:2rem 1.25rem}h1{font-size:1.75rem;line-height:1.2}h2{font-size:1.25rem;margin:0 0 .5rem}section{padding:1.5rem 0;border-top:1px solid #547086}label{display:block}input,button{font:inherit;padding:.65rem;border:1px solid #718a9d;border-radius:.3rem;background:#172632;color:inherit}input{box-sizing:border-box;max-width:100%;width:100%;margin:.5rem 0 1rem}button{cursor:pointer;margin:.3rem .4rem .3rem 0}button:hover,button:focus-visible{outline:2px solid #65c9f5}button:disabled{opacity:.55;cursor:wait}.primary{background:#65c9f5;color:#101821;border-color:#65c9f5}p{max-width:65ch}small{color:#c4d7e5}#status{min-height:2rem;white-space:pre-wrap}li{padding:.3rem 0}
+</style><h1>Music & books</h1><p>Connect Spotify and choose what to read on your Pocket Passport.</p>
+<section><label for="token">Companion access token</label><input id="token" type="password" autocomplete="off"><small>Use the service token from Passport settings. It stays in this tab.</small></section>
+<section><h2>Spotify</h2><p>Playback stays on your phone or Spotify player. Premium and a configured Spotify developer app are required.</p><button id="login" class="primary">Connect Spotify</button><button id="refresh">Check connection</button><p id="music">Not checked yet.</p><button data-action="previous">Previous</button><button data-action="toggle">Play / pause</button><button data-action="next">Next</button></section>
+<section><h2>Your bookshelf</h2><p>Upload a UTF-8 TXT or DRM-free EPUB, up to 4 MB. Books and reading position stay on this companion computer.</p><label for="file">Choose a book</label><input type="file" id="file" accept=".txt,.epub"><button id="upload" class="primary">Add to bookshelf</button><button id="books">Refresh bookshelf</button><ul id="list"></ul></section>
+<p id="status" role="status" aria-live="polite"></p>
+<script>
+const byId=id=>document.getElementById(id);
+async function api(path,body,raw=false){
+ const token=byId('token').value.trim();if(!token)throw Error('Enter your companion access token first.');
+ const response=await fetch(path,{method:body===undefined?'GET':'POST',headers:{Authorization:'Bearer '+token,...(raw?{}:{'Content-Type':'application/json'})},body:body===undefined?undefined:raw?body:JSON.stringify(body)});
+ const result=await response.json();if(!response.ok)throw Error(result.error||'Request failed');return result;
+}
+async function run(button,work){button.disabled=true;byId('status').textContent='Working…';try{await work();byId('status').textContent='Done.'}catch(error){byId('status').textContent=error.message}finally{button.disabled=false}}
+async function music(){const s=await api('/v1/spotify');byId('music').textContent=[s.state,s.title,s.artist,s.device].filter(Boolean).join(' · ')}
+async function books(){const data=await api('/v1/library');byId('list').replaceChildren();for(const book of data.books){const li=document.createElement('li');li.textContent=book.title;byId('list').append(li)}if(!data.books.length)byId('list').textContent='Your bookshelf is empty. Add a book above.'}
+byId('login').onclick=()=>run(byId('login'),async()=>{const s=await api('/v1/spotify/login',{});location.assign(s.url)});
+byId('refresh').onclick=()=>run(byId('refresh'),music);
+byId('books').onclick=()=>run(byId('books'),books);
+for(const button of document.querySelectorAll('[data-action]'))button.onclick=()=>run(button,async()=>{await api('/v1/spotify/control',{action:button.dataset.action});await music()});
+byId('upload').onclick=()=>run(byId('upload'),async()=>{const file=byId('file').files[0];if(!file)throw Error('Choose a book first.');if(file.size>4194304)throw Error('Choose a book smaller than 4 MB.');await api('/v1/library/import?name='+encodeURIComponent(file.name),file,true);await books()});
+</script></html>

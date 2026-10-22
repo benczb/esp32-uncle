@@ -72,6 +72,10 @@ int main(void){
  page=PAGE_PREFERENCES;settings_web_poll();assert(settings_web_ready&&starts==previous);
  page=PAGE_APPS;settings_web_poll();assert(settings_web_ready&&starts==previous);
  page=PAGE_RADIO;settings_web_poll();assert(settings_web_ready&&starts==previous);
+ for(unsigned destination=PAGE_HOME;destination<=PAGE_LANGUAGE;destination++){
+  page=destination;settings_web_poll();assert(settings_web_ready&&starts==previous);
+ }
+ page=PAGE_RADIO;
  relay=false;settings_web_poll();assert(!live&&!settings_web_ready);
  page=PAGE_MUSE;settings_web_poll();assert(!live); /* Native companion owns Muse. */
  for(unsigned cycle=0;cycle<1000;cycle++){

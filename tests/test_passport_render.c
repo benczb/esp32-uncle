@@ -1,4 +1,6 @@
 #include "passport_app.h"
+#include "passport_features.h"
+#include "passport_navigation.h"
 #include "lvgl.h"
 #include "passport_i18n.h"
 #include "passport_muse.h"
@@ -6,6 +8,10 @@
 #include <stdio.h>
 #include <string.h>
 LV_FONT_DECLARE(passport_font_16);
+passport_spotify_t passport_spotify={.state="playing",.title="A song for the journey",.artist="Example artist",.device="Phone"};
+passport_reader_t passport_reader={.state="reading",.title="A pocket-sized adventure",.text="A quiet road\nled to the\nriver. Beyond\nthe bridge,\nthe city was\nwaking up.",.count=1,.pages=42,.page=7};
+static passport_navigation_t fixture_navigation={.enabled=true,.valid=true,.status="Komoot connected",.turn={.direction=8,.distance=120,.street="River Valley Road"}};
+void passport_navigation_snapshot(passport_navigation_t *out){*out=fixture_navigation;}
 passport_config_t passport_config;
 char passport_qr_url[257]="https://example.test/profile";
 SemaphoreHandle_t passport_mutex;
@@ -72,14 +78,14 @@ int main(int argc,char **argv) {
  strcpy(passport_network_status,language?"Wi-Fi connected\nSetup code 123456":"已连接 Wi-Fi\n设置码 123456");
  strcpy(passport_athena,language?"Codex #1\n5h left 75%\nReset 1h 0m\n\n7d left 50%\nReset 24h 0m\fClaude\nNot connected / unavailable\f":"Codex #1\n5h 剩余 75%\n重置 1h 0m\n\n7d 剩余 50%\n重置 24h 0m\fClaude\n未连接或不可用\f");
  strcpy(passport_weather,language?"28.9°C\nCloudy\nRH 69%\nWind 15 km/h":"28.9°C\n多云\n湿度 69%\n风 15 km/h");
- for(unsigned theme=0;theme<3;theme++)for(int page=0;page<=PAGE_LANGUAGE;page++){
+ for(unsigned theme=0;theme<3;theme++)for(int page=0;page<=PAGE_READER;page++){
  passport_config.theme=theme;model.page=page;model.reply_page=page==PAGE_BRIGHTNESS?70:0;passport_ui_render(&model,86);lv_refr_now(d);
  /* Real production font metrics must keep footers and the homepage card inside. */
  lv_obj_t *layout_root=lv_screen_active();
  for(unsigned i=0;i<lv_obj_get_child_count(layout_root);i++){
   lv_obj_t *child=lv_obj_get_child(layout_root,i);
   if(!lv_obj_check_type(child,&lv_label_class))continue;
-  if(language){const lv_font_t *font=lv_obj_get_style_text_font(child,0);assert(font->dsc==lv_font_montserrat_16.dsc);assert(font->line_height==lv_font_montserrat_16.line_height);assert(font->fallback==&passport_font_16);}
+  if(language && page!=PAGE_NAVIGATION){const lv_font_t *font=lv_obj_get_style_text_font(child,0);assert(font->dsc==lv_font_montserrat_16.dsc);assert(font->line_height==lv_font_montserrat_16.line_height);assert(font->fallback==&passport_font_16);}
   int y=lv_obj_get_y(child),bottom=y+lv_obj_get_height(child);
   if(y>=282){if(bottom>310)fprintf(stderr,"Footer overflow language=%u page=%d width=%d text=%s bottom=%d\n",language,page,(int)lv_obj_get_width(child),lv_label_get_text(child),bottom);assert(bottom<=310);}
   if(page==PAGE_HOME && y==147){
@@ -266,6 +272,30 @@ int main(int argc,char **argv) {
  }
  puts("Train details: lossless bilingual font-wrapped pagination; ninth menu item visible: PASS");
 
+ /* Both reader sizes must fit complete bounded pages without clipping. */
+ for(unsigned language=0;language<2;language++)for(unsigned large=0;large<2;large++){
+  passport_language_set(language);model.page=PAGE_READER;passport_reader.large=large;
+  const char *row=large?"WWWWWWWW":"WWWWWWWWWW";passport_reader.text[0]=0;
+  for(unsigned i=0;i<(large?6u:7u);i++){if(i)strcat(passport_reader.text,"\n");strcat(passport_reader.text,row);}
+  passport_ui_render(&model,86);lv_refr_now(d);lv_obj_t *root=lv_screen_active();bool found=false;
+  for(unsigned i=0;i<lv_obj_get_child_count(root);i++){
+   lv_obj_t *child=lv_obj_get_child(root,i);if(!lv_obj_check_type(child,&lv_label_class) || lv_obj_get_y(child)!=79)continue;
+   lv_point_t extent;lv_text_get_size(&extent,lv_label_get_text(child),lv_obj_get_style_text_font(child,0),0,4,196,LV_TEXT_FLAG_NONE);
+   if(extent.y>171)fprintf(stderr,"Reader overflow language=%u large=%u height=%d width=%d\n",language,large,(int)extent.y,(int)extent.x);
+   assert(extent.y<=171);assert(extent.x<=196);found=true;
+  }
+  assert(found);snprintf(path,sizeof(path),"%s-reader-%u-%u.ppm",prefix,language,large);save(path);
+ }
+ passport_reader.large=false;
+ /* A route overlay must coexist with each new app and remain in bounds. */
+ fixture_navigation.overlay_until_us=6000000;
+ for(unsigned page=PAGE_SPOTIFY;page<=PAGE_READER;page++){
+  model.page=page;passport_ui_render(&model,86);lv_refr_now(d);
+  snprintf(path,sizeof(path),"%s-turn-overlay-%u.ppm",prefix,page);save(path);
+ }
+ fixture_navigation.overlay_until_us=0;
+ puts("Reader text sizes and navigation overlays: PASS");
+
  /* Every appearance choice is previewed with the production renderer. */
  for(unsigned language=0;language<2;language++)for(unsigned choice=0;choice<3;choice++){
   passport_language_set(language);model.page=PAGE_APPEARANCE;model.reply_page=choice;
@@ -298,7 +328,7 @@ int main(int argc,char **argv) {
  lv_mem_monitor_t memory;lv_mem_monitor(&memory);
  printf("LVGL 24KB pool: free=%zu largest=%zu\n",memory.free_size,memory.free_biggest_size);
  assert(memory.free_biggest_size>2048);
- printf("Font descriptors: %u code points + negative case PASS; 43 screen renders complete\n",checked);
+ printf("Font descriptors: %u code points + negative case PASS; screen renders complete\n",checked);
  return 0;
 }
 

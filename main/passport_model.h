@@ -2,12 +2,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#define PASSPORT_APP_COUNT 9
+#define PASSPORT_APP_COUNT 12
 #define PASSPORT_AVATAR_W 80
 #define PASSPORT_AVATAR_H 112
 #define PASSPORT_AVATAR_BYTES (PASSPORT_AVATAR_W * PASSPORT_AVATAR_H * 2)
 typedef enum { PAGE_HOME, PAGE_APPS, PAGE_CARD, PAGE_ATHENA, PAGE_HERMES,
- PAGE_MUSE, PAGE_RADIO, PAGE_WEATHER, PAGE_BUS, PAGE_SETTINGS, PAGE_TRAIN, PAGE_APPEARANCE, PAGE_PREFERENCES, PAGE_BRIGHTNESS, PAGE_LANGUAGE } passport_page_t;
+ PAGE_MUSE, PAGE_RADIO, PAGE_WEATHER, PAGE_BUS, PAGE_SETTINGS, PAGE_TRAIN, PAGE_APPEARANCE, PAGE_PREFERENCES, PAGE_BRIGHTNESS, PAGE_LANGUAGE, PAGE_NAVIGATION, PAGE_SPOTIFY, PAGE_READER } passport_page_t;
 typedef struct { passport_page_t page; unsigned selected; unsigned station;
  bool playing; bool volume_mode; unsigned reply_page; unsigned bus_stop; unsigned wifi_profile; } passport_model_t;
 /* key: 0 up, 1 down, 2 OK; hold: long-press, not release. */
@@ -52,7 +52,9 @@ bool passport_assistant_volume_key(passport_model_t *model,unsigned key,bool hol
 #define PASSPORT_SCREENSAVER_IDLE_US 10000000LL
 typedef struct { int64_t last_activity_us; bool asleep; } passport_screensaver_t;
 void passport_screensaver_init(passport_screensaver_t *state,int64_t now_us);
+bool passport_screensaver_keep_awake(passport_page_t page,bool voice_busy,bool web_active);
 /* Record activity; returns true when this activity woke the display. */
 bool passport_screensaver_activity(passport_screensaver_t *state,int64_t now_us);
 /* Advance time; returns true only on the poll that puts the display to sleep. */
 bool passport_screensaver_poll(passport_screensaver_t *state,int64_t now_us,bool busy);
+bool passport_screensaver_poll_timeout(passport_screensaver_t *state,int64_t now_us,bool busy,int64_t timeout_us);

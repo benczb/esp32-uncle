@@ -1,6 +1,8 @@
 """LAN companion. No credentials are embedded in the firmware or returned to clients."""
 import argparse
 import secrets
+from library import Library, MAX_UPLOAD
+from spotify import Spotify
 from speech import synthesize
 from haze import haze
 from bus import bus_arrivals
@@ -138,6 +140,18 @@ def account_setup():
         return ACCOUNT_SETUP
 
 
+FEATURE_LOCK = threading.Lock()
+FEATURES = None
+
+def features():
+    global FEATURES
+    with FEATURE_LOCK:
+        if FEATURES is None:
+            root = Path(os.environ.get('PASSPORT_DATA_DIR', str(Path.home()/'.local/share/pocket-passport')))
+            FEATURES = (Library(root/'books'), Spotify(root))
+        return FEATURES
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = 'PocketPassport/1.0'
 
@@ -195,11 +209,32 @@ class Handler(BaseHTTPRequestHandler):
         return hmac.compare_digest(supplied, 'Bearer ' + self.server.token)
 
     def do_GET(self):
+        public_path = urllib.parse.urlsplit(self.path)
+        if public_path.path == '/tools':
+            body = Path(__file__).with_name('tools.html').read_bytes()
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Cache-Control', 'no-store')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers(); self.wfile.write(body); return
+        if public_path.path == '/spotify/callback':
+            query = urllib.parse.parse_qs(public_path.query)
+            try:
+                features()[1].callback(query.get('state', [''])[0], query.get('code', [''])[0])
+                return self.send_json({'status': 'Spotify connected. Return to /tools or open Spotify on Passport.'})
+            except Exception:
+                return self.send_json({'error': 'Spotify sign-in failed. Start again at /tools.'}, 400)
         if not self.authorized():
             return self.send_json({'error': 'Unauthorized'}, 401)
         url = urllib.parse.urlsplit(self.path)
         query = urllib.parse.parse_qs(url.query)
         try:
+            if url.path == '/v1/spotify':
+                return self.send_json(features()[1].status())
+            if url.path == '/v1/library':
+                return self.send_json({'books': features()[0].books()})
+            if url.path == '/v1/reader':
+                return self.send_json(features()[0].snapshot())
             if url.path == '/v1/accounts':
                 return self.send_json(account_setup().list())
             if url.path.startswith('/v1/accounts/'):
@@ -272,6 +307,26 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             return self.send_json({'error': 'Unauthorized'}, 401)
         url = urllib.parse.urlsplit(self.path)
+        if url.path in ('/v1/spotify/login', '/v1/spotify/control', '/v1/library/import', '/v1/reader/control'):
+            try:
+                length = int(self.headers.get('Content-Length', '0'))
+                limit = MAX_UPLOAD if url.path == '/v1/library/import' else 256
+                if not 0 < length <= limit: raise ValueError('Invalid request size')
+                data = self.rfile.read(length)
+                if len(data) != length: raise ValueError('Incomplete upload')
+                library, spotify = features()
+                if url.path == '/v1/library/import':
+                    query = urllib.parse.parse_qs(url.query)
+                    return self.send_json(library.add(query.get('name', [''])[0], data), 201)
+                body = json.loads(data)
+                if not isinstance(body, dict): raise ValueError('Invalid request')
+                if url.path == '/v1/spotify/login': return self.send_json(spotify.login())
+                if url.path == '/v1/spotify/control': return self.send_json(spotify.control(body.get('action')))
+                return self.send_json(library.control(body.get('action')))
+            except ValueError as error:
+                return self.send_json({'error': str(error)[:160]}, 400)
+            except Exception:
+                return self.send_json({'error': 'Service unavailable; check book format or Spotify configuration'}, 502)
         if url.path == '/v1/accounts' or url.path.startswith('/v1/accounts/'):
             try:
                 length = int(self.headers.get('Content-Length', '0'))

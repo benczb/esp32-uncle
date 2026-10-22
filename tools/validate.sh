@@ -16,6 +16,10 @@ run_static_checks() {
     "${CC:-cc}" -std=c11 -Wall -Wextra -Werror -Imain \
         tests/test_passport_model.c main/passport_model.c -o /tmp/ai-passport-model-test
     /tmp/ai-passport-model-test
+    "${CC:-cc}" -std=c11 -Wall -Wextra -Werror -Imain \
+        tests/test_passport_features.c main/passport_features.c main/passport_model.c -o /tmp/ai-passport-features-test
+    /tmp/ai-passport-features-test
+    PYTHONDONTWRITEBYTECODE=1 python3 tests/test_passport_features.py
     PYTHONDONTWRITEBYTECODE=1 python3 tests/test_passport_train.py
     PYTHONDONTWRITEBYTECODE=1 python3 tests/test_passport_companion.py
     PYTHONDONTWRITEBYTECODE=1 python3 tests/test_passport_voice.py

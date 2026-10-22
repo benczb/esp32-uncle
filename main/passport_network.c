@@ -1,4 +1,6 @@
 #include "passport_app.h"
+#include "passport_features.h"
+#include "passport_navigation.h"
 #include "passport_muse.h"
 #include "passport_muse_voice.h"
 #include "passport_i18n.h"
@@ -29,6 +31,8 @@
 #include <time.h>
 #include <math.h>
 #include <sys/time.h>
+passport_spotify_t passport_spotify={.state="loading",.title="Connect Spotify at companion /tools"};
+passport_reader_t passport_reader={.state="loading",.title="Upload books at companion /tools"};
 passport_config_t passport_config;
 char passport_qr_url[257];
 SemaphoreHandle_t passport_mutex;
@@ -424,6 +428,12 @@ static esp_err_t avatar_post(httpd_req_t *r) {
  return e==ESP_OK?json_send(r,"{\"ok\":true}"):fail(r,"500 Internal Server Error","{\"error\":\"头像保存失败\"}");
 }
 typedef struct {int kind;passport_page_t page;char *text;char agent[8];unsigned bus_stop,bus_page,generation,wifi_profile,epoch;} work_t;
+bool passport_feature_key(unsigned page,unsigned action){
+ if((page!=PAGE_SPOTIFY && page!=PAGE_READER) || action>(page==PAGE_READER?4u:2u))return false;
+ work_t work={.kind=8,.page=page,.wifi_profile=action,.epoch=atomic_load(&function_epoch)};
+ return work_queue && xQueueSend(work_queue,&work,0)==pdTRUE;
+}
+
 static esp_err_t chat_post(httpd_req_t *r) {
  if(!auth(r))return fail(r,"401 Unauthorized","{}");
  char body[2400];if(receive_all(r,body,sizeof(body))<0)return fail(r,"400 Bad Request","{}");
@@ -482,7 +492,7 @@ static esp_err_t relay_post(httpd_req_t *r){
   }else if(!strcmp(name,"stop")){
    atomic_store(&phone_relay_enabled,false);atomic_store(&phone_relay_deadline,0);atomic_store(&audio_desired,false);atomic_fetch_add(&audio_generation,1);valid=true;
   }else if(!strcmp(name,"poll") && atomic_load(&phone_relay_enabled)){
-   phone_relay_renew();char reply[320];lock();snprintf(reply,sizeof(reply),"{\"playing\":%s,\"station\":%u,\"generation\":%u,\"page\":%u,\"speech_id\":\"%s\",\"weather_generation\":%u,\"city\":\"%s\",\"voice_phase\":%u}",atomic_load(&audio_desired)?"true":"false",atomic_load(&audio_station),atomic_load(&audio_generation),passport_function_active(),atomic_load(&reply_audio)?speech_id:"",atomic_load(&weather_generation),passport_config.city,passport_voice_phase());unlock();cJSON_Delete(j);return json_send(r,reply);
+   phone_relay_renew();char reply[384];lock();snprintf(reply,sizeof(reply),"{\"playing\":%s,\"station\":%u,\"generation\":%u,\"page\":%u,\"speech_id\":\"%s\",\"weather_generation\":%u,\"city\":\"%s\",\"voice_phase\":%u,\"screen_awake\":%s}",atomic_load(&audio_desired)?"true":"false",atomic_load(&audio_station),atomic_load(&audio_generation),passport_function_active(),atomic_load(&reply_audio)?speech_id:"",atomic_load(&weather_generation),passport_config.city,passport_voice_phase(),passport_screen_awake()?"true":"false");unlock();cJSON_Delete(j);return json_send(r,reply);
   }else if(!strcmp(name,"voice_poll") && phone_relay_active()){
    char *pending=passport_voice_relay_poll();cJSON_Delete(j);
    if(!pending)return fail(r,"503 Service Unavailable","{}");
@@ -904,6 +914,7 @@ static void network_worker(void *unused) {
    vTaskDelete(NULL);return;
   }
   passport_muse_poll();
+  passport_navigation_poll();
   wifi_timeout_check();
   unsigned current=passport_function_active();
   bool request=atomic_exchange(&train_refresh,false);
@@ -938,6 +949,42 @@ static void network_worker(void *unused) {
   }
   if(work.kind<=2 && (!passport_service_allowed(passport_function_active(),work.page)||
       (work.page!=PAGE_WEATHER && work.epoch!=atomic_load(&function_epoch))))continue;
+  if(work.page==PAGE_SPOTIFY || work.page==PAGE_READER){
+   if(work.epoch!=atomic_load(&function_epoch) || passport_function_active()!=(unsigned)work.page)continue;
+   bool spotify=work.page==PAGE_SPOTIFY;
+   const char *path=spotify?"/v1/spotify":"/v1/reader";
+   char body[48];const char *post=NULL;
+   if(work.kind==8){
+    static const char *reader_actions[]={"previous","next","open","size","shelf"};
+    static const char *spotify_actions[]={"previous","next","toggle"};
+    unsigned action=work.wifi_profile;
+    if(action>(spotify?2u:4u))continue;
+    snprintf(body,sizeof(body),"{\"action\":\"%s\"}",spotify?spotify_actions[action]:reader_actions[action]);
+    post=body;path=spotify?"/v1/spotify/control":"/v1/reader/control";
+   }
+   cJSON *j=bridge_request(path,post);
+   if(work.epoch==atomic_load(&function_epoch)){
+    lock();
+    if(spotify){
+     passport_feature_copy(passport_spotify.state,sizeof(passport_spotify.state),j?str(j,"state"):"offline");
+     passport_feature_copy(passport_spotify.title,sizeof(passport_spotify.title),j?str(j,"title"):"Check companion, Spotify login and active player");
+     passport_feature_copy(passport_spotify.artist,sizeof(passport_spotify.artist),j?str(j,"artist"):"");
+     passport_feature_copy(passport_spotify.device,sizeof(passport_spotify.device),j?str(j,"device"):"");
+     if(j){passport_spotify.progress_ms=(unsigned)fmax(0,cJSON_GetNumberValue(cJSON_GetObjectItem(j,"progress_ms")));passport_spotify.duration_ms=(unsigned)fmax(0,cJSON_GetNumberValue(cJSON_GetObjectItem(j,"duration_ms")));}
+    }else if(j){
+     passport_feature_copy(passport_reader.state,sizeof(passport_reader.state),str(j,"state"));
+     passport_feature_copy(passport_reader.title,sizeof(passport_reader.title),str(j,"title"));
+     passport_feature_copy(passport_reader.text,sizeof(passport_reader.text),str(j,"text"));
+     passport_reader.count=(unsigned)fmax(0,cJSON_GetNumberValue(cJSON_GetObjectItem(j,"count")));
+     passport_reader.index=(unsigned)fmax(0,cJSON_GetNumberValue(cJSON_GetObjectItem(j,"index")));
+     passport_reader.page=(unsigned)fmax(0,cJSON_GetNumberValue(cJSON_GetObjectItem(j,"page")));
+     passport_reader.pages=(unsigned)fmax(0,cJSON_GetNumberValue(cJSON_GetObjectItem(j,"pages")));
+     passport_reader.large=cJSON_IsTrue(cJSON_GetObjectItem(j,"large"));
+    }else passport_feature_copy(passport_reader.state,sizeof(passport_reader.state),"offline");
+    passport_dirty=true;unlock();
+   }
+   cJSON_Delete(j);continue;
+  }
   if(work.kind==7){
    unsigned level=work.wifi_profile;
    lock();bool saved=level>=10 && level<=100 && level%10==0 && store &&

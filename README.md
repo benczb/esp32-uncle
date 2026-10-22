@@ -133,9 +133,10 @@ edit the details. No USB cable or phone app is needed for the settings page.
 
 Keep the Passport in **Settings → Wi-Fi network** while editing and wait for **Settings saved.**
 before leaving. The phone page is available in Wi-Fi settings, Hermes and AI Usage.
-During an active phone relay it also stays available in Radio, the Settings submenu and Menu, and on
-Home while the `Pocket-Passport` setup hotspot is enabled. On other screens,
-reopen Settings and refresh your phone browser to continue editing.
+An active phone relay stays connected across all screens, including Home,
+until stopped or its heartbeat times out. Without a relay, Home exposes the
+phone page only while the `Pocket-Passport` setup hotspot is enabled. On other
+screens, reopen Settings and refresh your phone browser to continue editing.
 
 While native radio or Hermes speech plays, weather uses the same private
 computer bridge to avoid a second HTTPS connection on the Passport. During a
@@ -267,8 +268,9 @@ for the full setup, the one-fixed-link limit, and locking the tag.
 a button press — backlight off, and bus, weather and train fetching stops
 until the next press, which only wakes the display and then refreshes the
 current page. Wi-Fi stays associated in modem power-save rather than paying
-a reconnect on every wake. Radio playback, voice use, and an open phone
-setup page keep the display awake.
+a reconnect on every wake. Radio keeps playing with the screen off, including through phone relay.
+Voice interaction and the Wi-Fi setup screen keep the display awake.
+Keep the relay page open and the phone awake when using phone relay.
 
 ### 4. Know when changes have saved
 

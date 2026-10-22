@@ -367,12 +367,12 @@ global.fetch=async(url,options)=>{posts++;assert(url.startsWith(session.remote.b
     def test_phone_service_start_usage_and_stop(self):
         script=(ROOT/'main/passport_settings.html').read_text().split('<script>',1)[1].split('</script>',1)[0]
         harness="""
-const assert=require('assert');const elements={};const sent=[];let activePage=0,weatherGeneration=0,weatherCity='singapore',weatherFail=false;
+const assert=require('assert');const elements={};const sent=[];let activePage=0,weatherGeneration=0,weatherCity='singapore',weatherFail=false,screenAwake;
 global.document={getElementById(id){return elements[id]??={value:'',checked:false,textContent:''}}};
 global.fetch=async(path,options)=>{
  sent.push({path,options});
  if(path.includes('/v1/weather')&&weatherFail)throw new Error('Weather offline');
- const data=path.includes('/v1/stations')?{stations:[{name:'YES 933',country:'SG'}]}:path.includes('/v1/usage')?{usage:[{provider:'codex',status:'ok',primary:{usedPercent:20}}]}:path.includes('/v1/weather')?{current:{temperature_2m:30,relative_humidity_2m:70,wind_speed_10m:5,weather_code:3}}:{playing:false,page:activePage,weather_generation:weatherGeneration,city:weatherCity};
+ const data=path.includes('/v1/stations')?{stations:[{name:'YES 933',country:'SG'}]}:path.includes('/v1/usage')?{usage:[{provider:'codex',status:'ok',primary:{usedPercent:20}}]}:path.includes('/v1/weather')?{current:{temperature_2m:30,relative_humidity_2m:70,wind_speed_10m:5,weather_code:3}}:{playing:false,page:activePage,screen_awake:screenAwake,weather_generation:weatherGeneration,city:weatherCity};
  return {ok:true,json:async()=>data,text:async()=>JSON.stringify(data)};
 };
 """
@@ -395,6 +395,16 @@ global.fetch=async(path,options)=>{
  weatherFail=false;
  activePage=3;await pause(450);
  const usage=sent.find(s=>s.path==='/relay'&&JSON.parse(s.options.body).action==='usage');assert(usage);assert.equal(JSON.parse(usage.options.body).data.usage[0].primary.usedPercent,20);
+ screenAwake=false;phoneSession.usageAt=0;weatherGeneration++;
+ const sleepingUsage=sent.filter(s=>s.path.includes('/v1/usage')).length;
+ const sleepingWeather=sent.filter(s=>s.path.includes('/v1/weather')).length;
+ await pause(450);
+ assert.equal(sent.filter(s=>s.path.includes('/v1/usage')).length,sleepingUsage,'Sleeping display pauses usage fetches');
+ assert.equal(sent.filter(s=>s.path.includes('/v1/weather')).length,sleepingWeather,'Sleeping display pauses weather fetches');
+ assert(phoneSession&&!phoneSession.closed,'Sleeping must keep phone relay connected');
+ screenAwake=true;await pause(450);
+ assert.equal(sent.filter(s=>s.path.includes('/v1/usage')).length,sleepingUsage+1,'Wake resumes usage fetches');
+ assert.equal(sent.filter(s=>s.path.includes('/v1/weather')).length,sleepingWeather+1,'Wake resumes weather fetches');
  activePage=0;phoneSession.usageAt=0;const usageCount=sent.filter(s=>s.path.includes('/v1/usage')).length;await pause(450);
  assert.equal(sent.filter(s=>s.path.includes('/v1/usage')).length,usageCount,'Leaving usage stops polling');
  assert.equal(sent[0].options.headers.Authorization,'Bearer test-token');assert.equal(start.options.headers['X-Passport-Code'],'123456');

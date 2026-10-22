@@ -17,6 +17,7 @@
  */
 
 #include "ble_server.h"
+#include "passport_navigation.h"
 #ifdef ESP_PLATFORM
 #include "sdkconfig.h"
 #endif
@@ -809,6 +810,7 @@ void ble_server_full_shutdown(void) {
     s_subscribed = false;
     s_started = false;
     s_synced = false;
+    passport_navigation_reset();
     s_advertising_active = false;
 
     err = esp_bt_mem_release(ESP_BT_MODE_BLE);
@@ -935,6 +937,7 @@ static void on_sync(void) {
         return;
     }
     s_synced = true;
+    passport_navigation_synced();
 #if CONFIG_MUSE_PHONE_BRIDGE
     /* Upgrades retain bonds while the bridge RX declaration gains Write
      * Without Response for reply audio. Invalidate bonded clients' cached
@@ -948,6 +951,7 @@ static void on_sync(void) {
 static void on_reset(int reason) {
     ESP_LOGW(TAG, "reset reason=%d", reason);
     s_synced = false;
+    passport_navigation_reset();
     s_advertising_active = false;
     s_plaintext_status_blocked = false;
     rx_reset();

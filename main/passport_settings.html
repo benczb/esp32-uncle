@@ -14,7 +14,7 @@
 <button id="locate" type="button">使用手机当前位置</button><small>浏览器定位需要安全页面（HTTPS 或 localhost）。如设备 HTTP 设置页无法定位，请手选区域或填写坐标。</small>
 <label>纬度<input id="latitude" type="number" min="-90" max="90" step="any" placeholder="例如 1.35"></label><label>经度<input id="longitude" type="number" min="-180" max="180" step="any" placeholder="例如 103.82"></label>
 <h2>LTA · 巴士到站</h2><p>最多保存十个站点，每行填写「站点代码 | 名称」。上下键翻页和换站，确定刷新。时间单位为分钟，Arr 表示即将到站。</p><label>收藏巴士站<textarea id="bus_stops" rows="5" placeholder="82009 | Eunos Int"></textarea></label>
-<label>LTA API 密钥<input id="lta_api_key" type="password" maxlength="128" autocomplete="off" placeholder="留空保留现有密钥"></label><small>使用自己的 LTA DataMall Account Key。保存后不会回显，仅发送到 LTA；不要填写桥接令牌。</small><p id="lta_key_status" role="status"></p><h2>电脑桥接服务</h2><p>在家使用电脑局域网地址。巴士、PSI 和天气通过设备 Wi-Fi 直接联网；助手、用量与广播仍需要电脑服务。</p><label>服务地址<input id="bridge" type="url" maxlength="159" placeholder="http://电脑IP:4188"></label><label>服务访问令牌<input id="token" type="password" maxlength="96" autocomplete="off" placeholder="留空保留现有令牌"></label>
+<label>LTA API 密钥<input id="lta_api_key" type="password" maxlength="128" autocomplete="off" placeholder="留空保留现有密钥"></label><small>使用自己的 LTA DataMall Account Key。保存后不会回显，仅发送到 LTA；不要填写桥接令牌。</small><p id="lta_key_status" role="status"></p><h2>电脑桥接服务</h2><p>在家使用电脑局域网地址。巴士、PSI 和天气通过设备 Wi-Fi 直接联网；助手、用量与广播仍需要电脑服务。</p><label>服务地址<input id="bridge" type="url" maxlength="159" placeholder="http://电脑IP:4188"></label><label>服务访问令牌<input id="token" type="password" maxlength="96" autocomplete="off" placeholder="留空保留现有令牌"></label><p><button type="button" id="media_tools">Spotify / Books setup</button></p>
 <button id="save">保存设置</button><p role="status" id="save_status"></p><small>更改 Wi-Fi 后，长按设备确定键返回，再重启设备连接新网络。更换头像立即生效。</small>
 <h2>AI 用量账号登录</h2><p>输入服务访问令牌后连接账号。ChatGPT 登录用于 Codex 用量；Claude 使用官方 Claude Code，在电脑完成登录。</p>
 <label>账号提供商<select id="usage_provider"><option value="codex">ChatGPT / Codex</option><option value="claude">Claude Code</option></select></label>
@@ -59,6 +59,7 @@ el('language').onchange=applyPhoneLanguage;
 async function call(path,body,type='application/json',signal){const r=await fetch(path,{method:body===undefined?'GET':'POST',headers:{'X-Passport-Code':el('code').value,'Content-Type':type},signal,body:body===undefined?undefined:type==='application/json'?JSON.stringify(body):body});const t=await r.text();if(!r.ok)throw Error(t);return t?JSON.parse(t):{};}
 el('code').onchange=async()=>{configLoaded=false;try{await call('/time',{unix_time:Math.floor(Date.now()/1000)});const c=await call('/config');for(const k of ['name','tagline','contact','qr_url','language','theme','ssid','city','bridge','psi_region','latitude','longitude'])el(k).value=c[k]??'';if(!el('relay_url').value)el('relay_url').value=c.bridge||'';el('bus_stops').value=(c.bus_stops||[]).map(s=>s.code+' | '+s.name).join('\n');el('wifi_profile').disabled=!(c.wifi_profiles||[]).length;el('wifi_profile').value=c.selected_wifi_profile||'custom';el('wifi_profile').onchange();ltaKeyConfigured=!!c.lta_key_configured;configLoaded=true;applyPhoneLanguage();status('已读取资料并同步设备时间；已保存的密码和令牌不会回显。');}catch(e){status(e.message)}};
 el('wifi_profile').onchange=()=>{const preset=!el('wifi_profile').disabled&&el('wifi_profile').value!=='custom';el('ssid').disabled=preset;el('password').disabled=false;};
+el('media_tools').onclick=()=>{try{const url=new URL(el('bridge').value);if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('Invalid companion URL');url.pathname='/tools';url.search='';url.hash='';window.open(url.href,'_blank','noopener,noreferrer');}catch(e){status(e.message)}};
 el('save').onclick=async()=>{try{if(!configLoaded)throw Error('请先输入设置码并读取资料，再保存');const c={};for(const k of ['name','tagline','contact','ssid','password','bridge','token','city','psi_region','lta_api_key'])c[k]=el(k).value;if(!el('wifi_profile').disabled&&el('wifi_profile').value!=='custom')c.wifi_profile=el('wifi_profile').value;c.bus_stops=el('bus_stops').value.split('\n').map(s=>s.trim()).filter(Boolean).map(line=>{const parts=line.split('|');const code=parts.shift().trim(),name=parts.join('|').trim();if(!/^[0-9]{3,5}$/.test(code))throw Error('站点代码必须是 3 至 5 位数字');if([...name].length>24)throw Error('站点名称最多 24 个字符');return {code,name};});if(c.bus_stops.length>10)throw Error('最多保存十个巴士站');if(new Set(c.bus_stops.map(s=>s.code)).size!==c.bus_stops.length)throw Error('请移除重复站点');c.language=+el('language').value||0;c.qr_url=el('qr_url').value.trim();c.theme=+el('theme').value;if(el('psi_region').value==='auto'){if(el('latitude').value===''||el('longitude').value==='')throw Error('请填写完整坐标，或手选区域');c.latitude=+el('latitude').value;c.longitude=+el('longitude').value;}if(c.lta_api_key && !/^[\x21-\x7e]{1,128}$/.test(c.lta_api_key))throw Error('LTA 密钥格式无效');await call('/config',c);if(c.lta_api_key)ltaKeyConfigured=true;applyPhoneLanguage();el('password').value='';el('token').value='';el('lta_api_key').value='';status('设置已保存。');}catch(e){status(e.message)}};
 el('locate').onclick=()=>{if(!globalThis.isSecureContext||!navigator.geolocation)return status('当前浏览器页面不支持安全定位。请手选区域或填写坐标。');navigator.geolocation.getCurrentPosition(p=>{el('latitude').value=p.coords.latitude.toFixed(6);el('longitude').value=p.coords.longitude.toFixed(6);el('psi_region').value='auto';status('已取得手机位置。点击保存设置应用。');},()=>status('未取得定位权限或位置。可手选区域。'),{enableHighAccuracy:false,timeout:10000,maximumAge:60000});};
 let image=null;function crop(){if(!image)return;const c=el('preview'),ctx=c.getContext('2d'),scale=Math.max(80/image.width,112/image.height)*+el('zoom').value,w=80/scale,h=112/scale;ctx.drawImage(image,(image.width-w)*+el('panX').value,(image.height-h)*+el('panY').value,w,h,0,0,80,112)}
@@ -142,6 +143,7 @@ async function phoneServiceLoop(session){
  try{
   while(!session.closed){
    const control=await relayControl({action:'poll'});
+   const displayAwake=control.screen_awake!==false;
    if(session.closed)break;
    if(await forwardPhoneVoice(session)){await pause(10);continue;}
    if(control.page===4){
@@ -160,12 +162,12 @@ async function phoneServiceLoop(session){
     if(session.radio)session.radio.abort();session.generation=control.generation;session.radio=new AbortController();
     void pumpPhoneRadio(session,control,session.radio);
    }
-   if(control.page===3&&Date.now()-session.usageAt>30000&&!session.refreshing){
+   if(displayAwake&&control.page===3&&Date.now()-session.usageAt>30000&&!session.refreshing){
     session.refreshing=true;
     void phoneJson(session.remote,'/v1/usage').then(data=>session.closed?null:relayControl({action:'usage',data})).catch(()=>{if(!session.closed)serviceStatus('用量刷新失败，请重新连接手机转发。');}).finally(()=>{session.usageAt=Date.now();session.refreshing=false;});
    }
    const weatherKey=String(control.weather_generation)+':'+control.city;
-   if(!session.weatherRefreshing&&(weatherKey!==session.weatherKey||Date.now()-session.weatherAt>120000)){
+   if(displayAwake&&!session.weatherRefreshing&&(weatherKey!==session.weatherKey||Date.now()-session.weatherAt>120000)){
     session.weatherRefreshing=true;
     const generation=control.weather_generation,city=control.city;
     void phoneJson(session.remote,'/v1/weather?city='+encodeURIComponent(city)).then(data=>session.closed?null:relayControl({action:'weather',generation,city,data})).catch(()=>{}).finally(()=>{session.weatherAt=Date.now();session.weatherKey=weatherKey;session.weatherRefreshing=false;});

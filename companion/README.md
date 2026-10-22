@@ -202,3 +202,23 @@ Each setup account has a separate CLI profile under ignored `companion/.local/us
 Routes: `GET/POST /v1/accounts`, `GET /v1/accounts/<id>/status`, `POST /v1/accounts/<id>/login` and `/cancel`. Account creation registers the isolated profile with the configured tracker. Login uses the documented [Codex app-server device flow](https://learn.chatgpt.com/docs/app-server) or [Claude's own authentication flow](https://code.claude.com/docs/en/authentication).
 
 If the bridge is reachable but AI Usage fails, check the usage tracker address separately. `ATHENA_URL` must match the tracker's actual listening address; its default is `http://127.0.0.1:4177`. The private launcher also reads an optional saved address from `companion/.local/usage-url` when `ATHENA_URL` is unset. An explicit environment setting takes precedence. The saved file is local and ignored by Git.
+
+## Spotify and bookshelf
+
+Open `/tools` on the companion to connect Spotify or upload UTF-8 TXT/DRM-free
+EPUB. The page asks for the existing bridge token; it does not save it in browser
+storage. Spotify needs `SPOTIFY_CLIENT_ID` and a registered callback (default
+`http://127.0.0.1:4188/spotify/callback`), Premium and an active player. Optional
+`SPOTIFY_REDIRECT_URI` changes the callback. Tokens stay on the companion.
+
+Authenticated routes: `GET /v1/spotify`, `POST /v1/spotify/login`,
+`POST /v1/spotify/control` (`previous`, `next`, `toggle`);
+`GET /v1/library`, `POST /v1/library/import?name=book.epub` (raw file bytes),
+`GET /v1/reader`, `POST /v1/reader/control` (`previous`, `next`, `open`, `size`,
+`shelf`). Control bodies are JSON objects with an `action` field. Only `/tools`
+and the state-validated `/spotify/callback` bypass bearer authentication.
+
+Limits, persistent data location, device controls and remaining live tests are
+in [Navigation, Spotify and books](../docs/applications/pocket-passport.md#navigation-spotify-and-books).
+The companion must remain reachable for Spotify controls and book page changes.
+Komoot navigation is a direct phone-to-Passport BLE connection.

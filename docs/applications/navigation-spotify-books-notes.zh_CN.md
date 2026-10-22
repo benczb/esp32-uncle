@@ -1,0 +1,63 @@
+[English](navigation-spotify-books-notes.md) · **简体中文**
+
+# 导航、Spotify 和阅读 — 实现说明
+
+日期：2026-10-22。本说明对应 `feature/navigation-spotify-books` 分支，记录尚未
+集成 `main` 较新交通灯改动的 Pocket Passport 增量。工作区原有手机转发和息屏修复
+一并保留，已通过自动验收。
+
+## 已实现内容
+
+- **导航：** 通过 BLE 接收手机 Komoot 指令，显示基本转向箭头、距离、路名，处理
+  重连与过期状态，并在指令变化时显示六秒浮层。GPS 与路线计算由手机提供。
+- **Spotify：** 通过伴侣服务查看播放状态、切换上下曲和播放暂停。伴侣负责 PKCE
+  登录与令牌刷新，声音由活动 Spotify 播放器输出。需要 Premium、开发者应用访问
+  资格和已配置的客户端 ID。
+- **阅读：** 伴侣上传 UTF-8 TXT 或无 DRM 的 EPUB，支持书架选择、翻页、两种拉丁
+  字号和逐书进度保存。EPUB 按 spine 顺序转换。设备只缓存当前页，翻页需要伴侣
+  服务可达。中日韩回退字体仍为 16 px。
+
+长按确定返回菜单。阅读闲置 90 秒后熄屏；启用导航时导航页保持亮屏。
+操作、限制与账号设置详见
+[应用指南](pocket-passport.zh_CN.md#导航spotify-和阅读)和
+[伴侣设置](../../companion/README.zh_CN.md#spotify-与书架)。
+
+## 验证与设备交接
+
+| 检查 | 结果 |
+| --- | --- |
+| 完整仓库验收与主机测试 | 通过 |
+| 默认 ESP-IDF 5.5.3 固件构建 | 通过 |
+| 启用 Muse 的用户构建、合并布局和归档验证 | 通过 |
+| 本机 LVGL 双语言、字号和浮层渲染 | 通过 |
+| 伴侣 HTTP 认证、上传、阅读持久化和 PKCE 测试 | 通过 |
+| 伴侣 JavaScript 语法 | 通过 |
+| 浏览器交互设置 | 未运行：环境无可用浏览器 |
+| 烧录 | 受阻：检测到串口，但当前会话无访问权限 |
+| 实体设备及手机、账号实时行为 | 未运行 |
+
+已验证用户镜像 SHA-256：
+`235bd4ab13ed3244777865e41205993c65cb421d1ec436d45d91c18f7404bd9e`。
+对应 ELF SHA-256：
+`eb465980c2551f9cd010f06b281905bcafaa3a23db69e1a127f290014dbcfc09`。
+镜像符合现有应用分区大小。烧录需要串口权限，不需要整片擦除；合并烧录可能重置
+已存设置。
+
+待实机检查：稳定启动、三个目录入口及按键操作、当前 Komoot 兼容性、真实 Spotify
+授权与播放控制、书籍翻页，以及 Wi-Fi/BLE/语音的内存共存。烧录成功不等于这些
+功能均通过实机验收。
+
+## 发布与隐私
+
+GitHub 仅发布源码、测试和文档。私人默认配置、Wi-Fi 凭据、桥接与 Spotify 令牌、
+设备身份与二维码密钥、个人头像、上传书籍、原始设备日志、固件和调试归档均不进入
+提交。用户本地固件可能包含私人默认配置，因此不随源码发布。测试使用合成数据。
+运行时书籍与 Spotify 凭据保留在伴侣私有数据目录，API 不返回 Spotify 凭据。
+
+协议参考：[Komoot BLE 项目](https://github.com/jstiefel/esp32_komoot_ble)。
+ESP-IDF/NimBLE 接收器与 UI 为本地实现，未复制 Arduino UI 或位图素材。另参考过
+[ESP32_GPS](https://github.com/aresta/ESP32_GPS)、
+[Ebook](https://github.com/CHENXiNNNX/Ebook)、
+[TinyLibrary](https://github.com/jkingsman/TinyLibrary)和
+[AI Passport TV](https://github.com/zpdeng1020-coder/ai-passport-tv)。
+完整地图与电视不在本次范围内。

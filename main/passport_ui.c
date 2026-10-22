@@ -1,4 +1,7 @@
 #include "passport_app.h"
+#include "passport_features.h"
+#include "passport_navigation.h"
+#include "esp_timer.h"
 #include "passport_muse.h"
 #include "passport_muse_voice.h"
 #include "passport_i18n.h"
@@ -18,8 +21,8 @@ static const lv_font_t *ui_font(void){
  if(!initialized){english=lv_font_montserrat_16;english.fallback=&passport_font_16;initialized=true;}
  return passport_language_get()?&english:&passport_font_16;
 }
-static const char *titles_zh[]={"随身护照","应用目录","个人名片","AI 用量","Hermes 助手","Muse 助手","城市收音机","本地天气","巴士到站","Wi-Fi 设置","列车警报","外观","设置","亮度","语言"};
-static const char *titles_en[]={"Pocket Passport","Menu","Profile card","AI Usage","Hermes","Muse","SG/MY radio","Weather","Bus arrivals","Wi-Fi","Train alerts","Appearance","Settings","Brightness","Language"};
+static const char *titles_zh[]={"随身护照","应用目录","个人名片","AI 用量","Hermes 助手","Muse 助手","城市收音机","本地天气","巴士到站","Wi-Fi 设置","列车警报","外观","设置","亮度","语言","导航","Spotify","阅读"};
+static const char *titles_en[]={"Pocket Passport","Menu","Profile card","AI Usage","Hermes","Muse","SG/MY radio","Weather","Bus arrivals","Wi-Fi","Train alerts","Appearance","Settings","Brightness","Language","Navigation","Spotify","Books"};
 static lv_obj_t *box(int x,int y,int w,int h) {
  lv_obj_t *o=lv_obj_create(screen); lv_obj_remove_style_all(o);
  lv_obj_set_pos(o,x,y);lv_obj_set_size(o,w,h);
@@ -86,6 +89,18 @@ static size_t train_span(const char *text_value){
  }
  return n;
 }
+static void turn_arrow(unsigned direction){
+ /* Static coordinate arrays outlive the LVGL line's reference. */
+ static const lv_point_precise_t straight[]={{0,46},{0,0},{-17,17},{0,0},{17,17}};
+ static const lv_point_precise_t left[]={{0,46},{0,17},{-30,17},{-15,2},{-30,17},{-15,32}};
+ static const lv_point_precise_t right[]={{0,46},{0,17},{30,17},{15,2},{30,17},{15,32}};
+ bool go_left=direction==4||direction==5||direction==6||direction==11;
+ bool go_right=direction==7||direction==8||direction==9||direction==10;
+ if(direction==3){text(177,105,40,"OK");return;}
+ if(!go_left && !go_right && direction!=1 && direction!=2)return;
+ lv_obj_t *line=lv_line_create(screen);lv_line_set_points(line,go_left?left:go_right?right:straight,go_left||go_right?6:5);
+ lv_obj_set_pos(line,184,101);lv_obj_set_style_line_width(line,5,0);lv_obj_set_style_line_color(line,lv_color_hex(accent),0);
+}
 void passport_ui_render(const passport_model_t *m,int battery) {
  unsigned theme=m->page==PAGE_APPEARANCE?m->reply_page%3:passport_config.theme;
  /* White means white text on black; full colour gives state and navigation
@@ -143,8 +158,8 @@ void passport_ui_render(const passport_model_t *m,int battery) {
   hint(18,269,210,T("上:名片 下:巴士","Up: Card Down: Bus"));
   hint(18,290,210,T("确定:应用菜单","OK: Menu"));
  } else if(m->page==PAGE_APPS) {
-  static const char *apps_zh[]={"01  巴士到站","02  列车警报","03  AI 用量","04  Hermes 助手","05  Muse 助手","06  个人名片","07  城市收音机","08  本地天气","09  设置"};
-  static const char *apps_en[]={"01  Bus arrivals","02  Train alerts","03  AI Usage","04  Hermes","05  Muse","06  Profile card","07  SG/MY radio","08  Weather","09  Settings"};
+  static const char *apps_zh[]={"01  巴士到站","02  列车警报","03  AI 用量","04  Hermes 助手","05  Muse 助手","06  个人名片","07  城市收音机","08  本地天气","09  设置","10  导航","11  Spotify","12  阅读"};
+  static const char *apps_en[]={"01  Bus arrivals","02  Train alerts","03  AI Usage","04  Hermes","05  Muse","06  Profile card","07  SG/MY radio","08  Weather","09  Settings","10  Navigation","11  Spotify","12  Books"};
   unsigned first=m->selected>=8?m->selected-7:0;
   for(unsigned i=first;i<PASSPORT_APP_COUNT && i<first+8;i++) {
    int y=48+(i-first)*28;
@@ -296,6 +311,37 @@ void passport_ui_render(const passport_model_t *m,int battery) {
   char page[48];snprintf(page,sizeof(page),T("%u/%u%s","%u/%u%s"),selected+1,pages,passport_train_stale?T(" · 不完整/缓存"," | partial/cached"):"");text(22,239,196,page);
   hint(22,263,196,T("上下翻页 确定刷新","Up/Down | OK: Refresh"));
   hint(22,287,198,T("长按确定:返回菜单","Hold OK: Back to Menu"));
+ } else if(m->page==PAGE_NAVIGATION){
+  passport_navigation_t nav;passport_navigation_snapshot(&nav);
+  lv_obj_t *label=text(22,52,196,nav.stale?"Route stale - check phone":nav.status);lv_obj_set_height(label,44);
+  if(nav.valid && !nav.stale && nav.enabled){
+   turn_arrow(nav.turn.direction);
+   label=text(22,105,142,passport_turn_name(nav.turn.direction));lv_obj_set_height(label,40);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
+   char distance[48];snprintf(distance,sizeof(distance),"%lu m",(unsigned long)nav.turn.distance);
+   lv_obj_t *number=text(22,150,196,distance);lv_obj_set_style_text_font(number,&lv_font_montserrat_32,0);
+   label=text(22,193,196,nav.turn.street);lv_obj_set_height(label,52);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
+  }else text(22,116,196,"Open Komoot on phone.\nStart a route, then\npress OK to connect.");
+  hint(22,266,196,nav.enabled?"OK: Stop navigation":"OK: Start navigation");
+  hint(22,290,196,T("长按确定:返回菜单","Hold OK: Menu"));
+ } else if(m->page==PAGE_SPOTIFY){
+  text(22,53,196,passport_spotify.state);
+  lv_obj_t *label=text(22,88,196,passport_spotify.title);lv_obj_set_height(label,72);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
+  label=text(22,167,196,passport_spotify.artist);lv_obj_set_height(label,46);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
+  label=text(22,220,196,passport_spotify.device);lv_obj_set_height(label,22);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
+  hint(22,264,196,"Up/Down: Prev/Next");hint(22,288,196,"OK: Play/pause");
+ } else if(m->page==PAGE_READER){
+  const passport_reader_t *r=&passport_reader;
+  lv_obj_t *label=text(22,48,196,r->title);lv_obj_set_height(label,24);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
+  if(!strcmp(r->state,"reading") || (!strcmp(r->state,"offline") && r->text[0])){
+   label=text(22,79,196,r->text);lv_obj_set_height(label,171);lv_label_set_long_mode(label,LV_LABEL_LONG_WRAP);
+   if(r->large){static lv_font_t large;large=lv_font_montserrat_20;large.fallback=&passport_font_16;lv_obj_set_style_text_font(label,&large,0);}
+   char page[64];snprintf(page,sizeof(page),"%u / %u%s",r->page+1,r->pages,!strcmp(r->state,"offline")?" | offline":"");text(22,253,196,page);
+   hint(22,289,196,"Up/Down: Pages");
+  }else{
+   text(22,104,196,r->count?"Up/Down: Choose book\nOK: Read / Bookshelf":"Add TXT or EPUB\non companion /tools");
+   text(22,200,196,!strcmp(r->state,"offline")?"Companion unavailable":"Position saved on bridge");
+   hint(22,263,196,"Hold Up: Text size");hint(22,287,196,"Hold Down: Bookshelf");
+  }
  } else if(m->page==PAGE_WEATHER) {
   text(24,56,192,passport_config.city);text(24,100,192,passport_weather[0]?passport_weather:T("等待天气数据","Waiting for weather"));
   hint(22,218,198,T("来源:Open-Meteo\n室外天气 · 非机内传感器","Open-Meteo\nOutdoor weather"));
@@ -304,5 +350,12 @@ void passport_ui_render(const passport_model_t *m,int battery) {
  }
  /* Language changes replace differently sized labels; repaint the full root. */
  lv_obj_invalidate(screen);
+ passport_navigation_t overlay;passport_navigation_snapshot(&overlay);
+ if(m->page!=PAGE_NAVIGATION && overlay.enabled && overlay.valid && !overlay.stale && overlay.overlay_until_us>esp_timer_get_time()){
+  box(14,220,212,91);
+  char turn[80];snprintf(turn,sizeof(turn),"%s | %lu m",passport_turn_name(overlay.turn.direction),(unsigned long)overlay.turn.distance);
+  lv_obj_t *label=text(22,229,196,turn);lv_obj_set_height(label,42);
+  label=text(22,275,196,overlay.turn.street);lv_obj_set_height(label,24);lv_label_set_long_mode(label,LV_LABEL_LONG_DOT);
+ }
  lv_screen_load(screen);
 }
